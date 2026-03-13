@@ -1,11 +1,12 @@
 import numpy as np
 
 class Swarm:
-    def __init__(self, positions, velocities, constraints):
+    def __init__(self, positions, velocities, dim, constraints):
         # si almacenarmaos las particulas en un array de objetos, tendriamos que hacer muchos bucles, lecturas y escrituras de atributos, mucha busqueda de memoria
         # todo esto se volvería dificil de implementar sin duplicar codigo y queremos un PSO con distintas versiones y modular
         self.positions = np.asarray(positions, dtype=float)   # (Numero particulas, Dimension)
         self.velocities = np.asarray(velocities, dtype=float)  # (N, D)
+        self.dim = dim
         self.pbest_positions = positions.copy()     # (N, D)
         self.pbest_values = np.full(positions.shape[0], np.inf, dtype=float)  # (N,)
         self.b_gposition = np.zeros(self.dim, dtype=float)
@@ -36,8 +37,11 @@ class Swarm:
 
     def update_b_global(self):
         index = np.argmin(self.pbest_values) #mejor resultado de todo el swarm
-        self.b_gvalue = self.pbest_values[index]
-        self.b_gposition = self.pbest_positions[index].copy()
+        value = self.pbest_values[index]
+
+        if value < self.b_gvalue:
+            self.b_gvalue = value
+            self.b_gposition = self.pbest_positions[index].copy()
 
     def update_velocities(self, w, c1, c2, r1, r2, social_best):
         self.velocities = (w * self.velocities) + (c1 * r1 *(self.pbest_positions - self.positions)) + (c2 * r2 *(social_best - self.positions))

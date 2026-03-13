@@ -1,13 +1,12 @@
 import numpy as np
 
-from .functions import *
+import pso.objectives.functions as f
 
 class Objective:
-    def __init__(self, name, function, lower_bound, upper_bound, optimum_value, optimum_point):
+    def __init__(self, name, function, constraints, optimum_value, optimum_point):
         self.name = name
         self.function = function
-        self.lower_bound = lower_bound
-        self.upper_bound = upper_bound
+        self.constraints = constraints
         self.optimum_value = optimum_value
         self.optimum_point = optimum_point
         
@@ -15,28 +14,28 @@ class Objective:
 OBJECTIVES = {
     "sphere": Objective(
         name="sphere",
-        function=sphere,
+        function=f.sphere,
         constraints=(-5.12, 5.12),
         optimum_value=0.0,
         optimum_point=lambda dim: np.zeros(dim),
     ),
     "rosenbrock": Objective(
         name="rosenbrock",
-        function=rosenbrock,
+        function=f.rosenbrock,
         constraints=(-5.0, 10),
         optimum_value=0.0,
         optimum_point=lambda dim: np.ones(dim),
     ),
     "rastrigin": Objective(
         name="rastrigin",
-        function=rastrigin,
+        function=f.rastrigin,
         constraints=(-5.12, 5.12),
         optimum_value=0.0,
         optimum_point=lambda dim: np.zeros(dim),
     ),
     "ackley": Objective(
         name="ackley",
-        function=ackley,
+        function=f.ackley,
         constraints=(-32.768, 32.768),
         optimum_value=0.0,
         optimum_point=lambda dim: np.zeros(dim),
