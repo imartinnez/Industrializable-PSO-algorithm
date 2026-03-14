@@ -54,6 +54,6 @@ def optimum_point(objective, dim):
 
 def bounds_array(objective, dim):
     #Genera arrays con límites inferiores y superiores
-    lower = np.full(dim, objective.lower_bound)
-    upper = np.full(dim, objective.upper_bound)
+    lower = np.full(dim, objective.constraints[0])
+    upper = np.full(dim, objective.constraints[1])
     return lower, upper

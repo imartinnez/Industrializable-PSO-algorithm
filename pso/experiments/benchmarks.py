@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Callable, Tuple
 
 import pso.core.pso as p
+import pso.core.result as r
 
 @dataclass
 class Instance:
@@ -39,4 +40,53 @@ class Instance:
 
         return result
 
+def make_instances(objectives, dims, seeds, max_iter, n_particles, strategy, topology="global", tol=0.0, w=0.7, c1=1.5, c2=1.5):
+    instances = []
 
+    for objective_name in objectives:
+        objective = r.get_objective(objective_name)
+
+        for dim in dims:
+            for seed in seeds:
+                instances.append(
+                    Instance(
+                        name=f"{objective_name}_d{dim}_s{seed}", objective=objective.function,
+                        dim=dim,
+                        constraints=objective.constraints,
+                        seed=seed,
+                        max_iter=max_iter,
+                        n_particles=n_particles,
+                        strategy=strategy,
+                        topology=topology,
+                        tol=tol,
+                        w=w,
+                        c1=c1,
+                        c2=c2
+                    )
+                )
+
+    return instances
+
+def run_suite(instances):
+    results = []
+
+    for instance in instances:
+        result = instance.run_instance()
+
+        row = {
+            "instance_name": instance.name,
+            "dim": instance.dim,
+            "seed": instance.seed,
+            "strategy": instance.strategy,
+            "topology": instance.topology,
+            "best_position": result.best_position,
+            "best_value": result.best_value,
+            "total_time": result.total_time,
+            "fitness_eval_time_total": result.fitness_eval_time_total,
+            "iterations_executed": result.iterations_executed,
+            "best_fitness_by_iter": result.best_fitness_by_iter,
+        }
+
+        results.append(row)
+
+    return results
