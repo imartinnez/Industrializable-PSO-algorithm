@@ -89,15 +89,3 @@ class PSO:
             )
 
         return result
-            
-
-        
-        
-    
-class PSOSequential(PSO):
-    def evaluate(self):
-        pass
-
-class PSOParallel(PSO):
-    def evaluate(self):
-        pass

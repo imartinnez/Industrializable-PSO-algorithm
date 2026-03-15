@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Callable, Tuple
 
-import pso.core.pso as p
+import pso.core.pso_engine as p
 import pso.core.result as r
 
 @dataclass
