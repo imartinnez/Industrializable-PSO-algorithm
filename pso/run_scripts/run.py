@@ -10,7 +10,7 @@ if __name__ == "__main__":
 
     instance1 = i.Instance(
         name="sphere_d10",
-        objective=sphere.function,
+        fitness_f=sphere.function,
         dim=10,
         constraints=sphere.constraints,
         seed=1,
@@ -18,7 +18,8 @@ if __name__ == "__main__":
         n_particles=50,
         strategy="inertia",
         topology="global",
-        tol=0.0
+        tol=0.0,
+        mode="sequential"
     )
     
     result = instance1.run_instance()

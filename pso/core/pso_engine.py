@@ -5,7 +5,7 @@ import pso.core.swarm as s
 import pso.core.result as r
 
 class PSO:
-    def __init__(self, n_particles, fitness_f, dim, constraints, strategy, topology, tol, max_iter, w, c1, c2):
+    def __init__(self, n_particles, fitness_f, dim, constraints, strategy, topology, tol, max_iter, w, c1, c2, evaluator):
         self.n_particles = n_particles
         self.fitness_f = fitness_f
         self.dim = dim
@@ -14,6 +14,7 @@ class PSO:
         self.topology = topology
         self.tol = tol
         self.max_iter = max_iter
+        self.evaluator = evaluator
         self.w = w
         self.c1 = c1
         self.c2 = c2
@@ -28,7 +29,7 @@ class PSO:
         
         self.swarm = s.Swarm(positions, velocities, self.dim, self.constraints)
         
-        values = np.array([self.fitness_f(position) for position in self.swarm.positions])
+        values = self.evaluator.evaluate(self.swarm.positions)
         self.swarm.initialize_bests_from_values(values)
     
     def run(self, seed=42):
@@ -50,7 +51,7 @@ class PSO:
             
             #1- Se evalua el fitness midiendo el tiempo que tarda
             eval_start = perf_counter()
-            values = np.array([self.fitness_f(position) for position in self.swarm.positions])
+            values = self.evaluator.evaluate(self.swarm.positions)
             eval_time = perf_counter() - eval_start
             fitness_eval_time_by_iter.append(eval_time)
 
@@ -75,17 +76,17 @@ class PSO:
             if abs(b_global - self.swarm.b_gvalue) < self.tol:
                 break
             b_global = self.swarm.b_gvalue
-
-            total_time = perf_counter() - pso_start
-
-            result = r.Result(
-                self.swarm.b_gposition.copy(),
-                float(self.swarm.b_gvalue),
-                total_time,
-                sum(fitness_eval_time_by_iter),
-                fitness_eval_time_by_iter,
-                best_fitness_by_iter,
-                iterations,
-            )
+            
+        total_time = perf_counter() - pso_start
+        
+        result = r.Result(
+            self.swarm.b_gposition.copy(),
+            float(self.swarm.b_gvalue),
+            total_time,
+            sum(fitness_eval_time_by_iter),
+            fitness_eval_time_by_iter,
+            best_fitness_by_iter,
+            iterations,
+        )
 
         return result

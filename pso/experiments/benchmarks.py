@@ -1,19 +1,22 @@
 from dataclasses import dataclass
 from typing import Callable, Tuple
 
+from pso.parallel.evaluator import choose_evaluator
 import pso.core.pso_engine as p
 import pso.core.result as r
 
 @dataclass
 class Instance:
     name: str
-    objective: Callable
+    fitness_f: Callable
     dim: int
     constraints: Tuple[float, float]
     seed: int
     max_iter: int
     n_particles: int
     strategy: str
+    mode: str
+        
     topology: str = "global"
     tol: float = 0.0
     w: float = 0.7
@@ -21,16 +24,19 @@ class Instance:
     c2: float = 1.5
 
     def run_instance(self):
+        
+        evaluator = choose_evaluator(self.mode, self.fitness_f)
 
         pso = p.PSO(
             n_particles=self.n_particles,
-            fitness_f=self.objective,
+            fitness_f=self.fitness_f,
             dim=self.dim,
             constraints=self.constraints,
             strategy=self.strategy,
             topology=self.topology,
             tol=self.tol,
             max_iter=self.max_iter,
+            evaluator=evaluator,
             w=self.w,
             c1=self.c1,
             c2=self.c2
@@ -50,7 +56,7 @@ def make_instances(objectives, dims, seeds, max_iter, n_particles, strategy, top
             for seed in seeds:
                 instances.append(
                     Instance(
-                        name=f"{objective_name}_d{dim}_s{seed}", objective=objective.function,
+                        name=f"{objective_name}_d{dim}_s{seed}", fitness_f=objective.function,
                         dim=dim,
                         constraints=objective.constraints,
                         seed=seed,
