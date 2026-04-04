@@ -1,8 +1,22 @@
 from pyswarm import pso
 import numpy as np
+import os
+
 
 import pso.objectives.registry as o
 import pso.experiments.benchmarks as i
+import pso.viz.animator as a
+
+# faltan las estrategias explicitas (clamp/reflect/penalty, elegida y documentada)
+# faltan criterios de parada (iteraciones, tolerancia, estancamiento)
+# arreglar visualizaciones y entden
+# grid search
+# analisis
+
+# ── Configuración de visualización ───────────────────────────────────────────
+VISUALIZE        = True    # ← Cambia esto a False para saltar la animación
+VIZ_OBJECTIVE    = "rastrigin"
+VIZ_FPS          = 15
 
 if __name__ == "__main__":
 
@@ -75,3 +89,44 @@ if __name__ == "__main__":
 
     print("\nPySwarm result: ")
     print(fopt)
+
+
+
+
+
+
+    # ── Visualización (al final) ─────────────────────────────────────────────────
+    if VISUALIZE:
+
+        os.makedirs("results", exist_ok=True)
+        obj = o.get_objective(VIZ_OBJECTIVE)
+
+        # 2D
+        print("\n=== Visualización 2D ===")
+        result_2d = i.Instance(
+            name="viz_2d", fitness_f=obj.function, dim=2,
+            constraints=obj.constraints, seed=1, max_iter=300,
+            n_particles=40, strategy="inertia", topology="global",
+            tol=0.0, mode="sequential",
+        ).run_instance()
+
+        a.animate_2d(
+            result=result_2d, fitness_f=obj.function, constraints=obj.constraints,
+            title=f"PSO – {VIZ_OBJECTIVE} (d=2)",
+            save_path=f"results/viz_{VIZ_OBJECTIVE}_2d.gif", fps=VIZ_FPS,
+        )
+
+        # 3D
+        print("\n=== Visualización 3D ===")
+        result_3d = i.Instance(
+            name="viz_3d", fitness_f=obj.function, dim=3,
+            constraints=obj.constraints, seed=1, max_iter=300,
+            n_particles=40, strategy="inertia", topology="global",
+            tol=0.0, mode="sequential",
+        ).run_instance()
+
+        a.animate_3d(
+            result=result_3d, fitness_f=obj.function, constraints=obj.constraints,
+            title=f"PSO – {VIZ_OBJECTIVE} (d=3)",
+            save_path=f"results/viz_{VIZ_OBJECTIVE}_3d.gif", fps=VIZ_FPS,
+        )

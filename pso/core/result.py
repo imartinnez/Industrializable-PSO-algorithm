@@ -10,3 +10,5 @@ class Result:
     fitness_eval_time_by_iter: list[float]
     best_fitness_by_iter: list[float]
     iterations: int
+    trajectories: list[np.ndarray] | None # una (N, dim) por iteración
+    best_positions_by_iter: list[np.ndarray] | None # el gbest de cada iteración

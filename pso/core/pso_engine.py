@@ -43,7 +43,10 @@ class PSO:
         best_fitness_by_iter = []
         fitness_eval_time_by_iter = []
         iterations = 0
-        
+        trajectories = []
+        best_positions_by_iter = []
+
+
         for i in range(self.max_iter):
             
             seed = seeds[i]
@@ -60,6 +63,10 @@ class PSO:
             #2- Se actualiza el mejor global
             self.swarm.update_b_global()
             best_fitness_by_iter.append(float(self.swarm.b_gvalue))
+
+            #2.5- Se registran los datos
+            trajectories.append(self.swarm.positions.copy())  # ??????
+            best_positions_by_iter.append(self.swarm.b_gposition.copy()) # ??????
             
             #3- Se mueven las particulas
             r1 = np.random.rand(self.n_particles, self.dim)
@@ -87,6 +94,8 @@ class PSO:
             fitness_eval_time_by_iter,
             best_fitness_by_iter,
             iterations,
+            trajectories,
+            best_positions_by_iter
         )
 
         return result
