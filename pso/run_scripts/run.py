@@ -21,14 +21,37 @@ if __name__ == "__main__":
         tol=0.0,
         mode="sequential"
     )
+
+    instance2 = i.Instance(
+        name="sphere2_d10",
+        fitness_f=sphere.function,
+        dim=10,
+        constraints=sphere.constraints,
+        seed=1,
+        max_iter=2000,
+        n_particles=50,
+        strategy="inertia",
+        topology="global",
+        tol=0.0,
+        mode="threading"
+    )
     
-    result = instance1.run_instance()
+    result1 = instance1.run_instance()
 
     print("PSO result:")
-    print("best value:", result.b_value)
-    print("total time:", result.total_time)
-    print("fitness eval total:", result.fitness_eval_time_total)
-    print("iterations:", result.iterations)
+    print("best value:", result1.b_value)
+    print("total time:", result1.total_time)
+    print("fitness eval total:", result1.fitness_eval_time_total)
+    print("iterations:", result1.iterations)
+    #print("curve:", result.best_fitness_by_iter)
+
+    result2 = instance1.run_instance()
+
+    print("PSO 2 result:")
+    print("best value 2:", result2.b_value)
+    print("total time 2:", result2.total_time)
+    print("fitness eval total 2:", result2.fitness_eval_time_total)
+    print("iterations 2:", result2.iterations)
     #print("curve:", result.best_fitness_by_iter)
 
 

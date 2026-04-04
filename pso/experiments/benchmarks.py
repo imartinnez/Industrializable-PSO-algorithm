@@ -3,7 +3,7 @@ from typing import Callable, Tuple
 
 from pso.parallel.evaluator import choose_evaluator
 import pso.core.pso_engine as p
-import pso.core.result as r
+import pso.objectives.registry as r
 
 @dataclass
 class Instance:
@@ -46,7 +46,10 @@ class Instance:
 
         return result
 
-def make_instances(objectives, dims, seeds, max_iter, n_particles, strategy, topology="global", tol=0.0, w=0.7, c1=1.5, c2=1.5):
+
+
+
+def make_instances(objectives, dims, seeds, max_iter, n_particles, strategy, mode, topology="global", tol=0.0, w=0.7, c1=1.5, c2=1.5):
     instances = []
 
     for objective_name in objectives:
@@ -63,6 +66,7 @@ def make_instances(objectives, dims, seeds, max_iter, n_particles, strategy, top
                         max_iter=max_iter,
                         n_particles=n_particles,
                         strategy=strategy,
+                        mode=mode,
                         topology=topology,
                         tol=tol,
                         w=w,
@@ -84,6 +88,7 @@ def run_suite(instances):
             "dim": instance.dim,
             "seed": instance.seed,
             "strategy": instance.strategy,
+            "mode": instance.mode,
             "topology": instance.topology,
             "best_position": result.best_position,
             "best_value": result.best_value,
