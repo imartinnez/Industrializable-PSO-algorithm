@@ -9,7 +9,7 @@ import pso.viz.animator as a
 
 # faltan las estrategias explicitas (clamp/reflect/penalty, elegida y documentada)
 # faltan criterios de parada (iteraciones, tolerancia, estancamiento)
-# arreglar visualizaciones y entden
+# arreglar visualizaciones y entden, poner para almacenar experimentos (timer en el nombre)
 # grid search
 # analisis
 
@@ -30,7 +30,8 @@ if __name__ == "__main__":
         seed=1,
         max_iter=2000,
         n_particles=50,
-        strategy="inertia",
+        strategy="clamp",
+        fitness_policy="plain",
         topology="global",
         tol=0.0,
         mode="sequential"
@@ -44,7 +45,8 @@ if __name__ == "__main__":
         seed=1,
         max_iter=2000,
         n_particles=50,
-        strategy="inertia",
+        strategy="clamp",
+        fitness_policy="plain",
         topology="global",
         tol=0.0,
         mode="threading"

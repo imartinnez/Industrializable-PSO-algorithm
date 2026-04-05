@@ -5,12 +5,13 @@ import pso.core.swarm as s
 import pso.core.result as r
 
 class PSO:
-    def __init__(self, n_particles, fitness_f, dim, constraints, strategy, topology, tol, max_iter, w, c1, c2, evaluator):
+    def __init__(self, n_particles, fitness_f, dim, constraints, strategy, fitness_policy, topology, tol, max_iter, w, c1, c2, evaluator):
         self.n_particles = n_particles
         self.fitness_f = fitness_f
         self.dim = dim
         self.constraints = constraints
         self.strategy = strategy
+        self.fitness_policy = fitness_policy
         self.topology = topology
         self.tol = tol
         self.max_iter = max_iter
@@ -19,6 +20,11 @@ class PSO:
         self.c1 = c1
         self.c2 = c2
         self.swarm = None
+        self.penalty_lambda=float(1e4)
+
+        if self.fitness_policy == "penalty" and self.strategy in ["clamp", "reflect"]:
+            print("Strategy changed to 'None' because of the use of Penalty Policy")
+            self.strategy = "None"
     
     def generate_particles(self):
         low, high = self.constraints
@@ -27,10 +33,31 @@ class PSO:
         positions = np.random.uniform(low, high, size=(self.n_particles, self.dim))
         velocities = np.random.uniform(-vmax, vmax, size=(self.n_particles, self.dim))
         
-        self.swarm = s.Swarm(positions, velocities, self.dim, self.constraints)
+        self.swarm = s.Swarm(positions, velocities, self.dim, self.constraints, self.strategy)
         
         values = self.evaluator.evaluate(self.swarm.positions)
+        values = self.apply_fitness_policy(values)
         self.swarm.initialize_bests_from_values(values)
+
+    def penalty_vector(self):
+        """
+        Penalización por violar bounds (vector N):
+        sum_j [ max(0, x-ub)^2 + max(0, lb-x)^2 ]
+        """
+        excess_high = np.maximum(0.0, self.swarm.positions - self.swarm.upper_bounds)
+        excess_low  = np.maximum(0.0, self.swarm.lower_bounds - self.swarm.positions)
+
+        p = (excess_high**2 + excess_low**2).sum(axis=1)
+        return p
+
+    def apply_fitness_policy(self, values):
+        match self.fitness_policy:
+            case "plain":
+                return values
+            case "penalty":
+                return values + self.penalty_lambda * self.penalty_vector()
+            case _:
+                raise ValueError("Invalid fitness policy")
     
     def run(self, seed=42):
         pso_start = perf_counter()
@@ -55,6 +82,7 @@ class PSO:
             #1- Se evalua el fitness midiendo el tiempo que tarda
             eval_start = perf_counter()
             values = self.evaluator.evaluate(self.swarm.positions)
+            values = self.apply_fitness_policy(values)
             eval_time = perf_counter() - eval_start
             fitness_eval_time_by_iter.append(eval_time)
 

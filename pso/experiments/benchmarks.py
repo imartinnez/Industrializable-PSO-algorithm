@@ -15,6 +15,7 @@ class Instance:
     max_iter: int
     n_particles: int
     strategy: str
+    fitness_policy: str
     mode: str
         
     topology: str = "global"
@@ -33,6 +34,7 @@ class Instance:
             dim=self.dim,
             constraints=self.constraints,
             strategy=self.strategy,
+            fitness_policy=self.fitness_policy,
             topology=self.topology,
             tol=self.tol,
             max_iter=self.max_iter,
@@ -49,7 +51,7 @@ class Instance:
 
 
 
-def make_instances(objectives, dims, seeds, max_iter, n_particles, strategy, mode, topology="global", tol=0.0, w=0.7, c1=1.5, c2=1.5):
+def make_instances(objectives, dims, seeds, max_iter, n_particles, strategy, fitness_policy, mode, topology="global", tol=0.0, w=0.7, c1=1.5, c2=1.5):
     instances = []
 
     for objective_name in objectives:
@@ -66,6 +68,7 @@ def make_instances(objectives, dims, seeds, max_iter, n_particles, strategy, mod
                         max_iter=max_iter,
                         n_particles=n_particles,
                         strategy=strategy,
+                        fitness_policy=fitness_policy,
                         mode=mode,
                         topology=topology,
                         tol=tol,
@@ -88,6 +91,7 @@ def run_suite(instances):
             "dim": instance.dim,
             "seed": instance.seed,
             "strategy": instance.strategy,
+            "fitness_policy": instance.fitness_policy,
             "mode": instance.mode,
             "topology": instance.topology,
             "best_position": result.best_position,
