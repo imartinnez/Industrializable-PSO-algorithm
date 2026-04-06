@@ -1,14 +1,35 @@
+# @author: Íñigo Martínez Jiménez
+
+"""
+This module defines the Swarm class used in the PSO.
+"""
+
 import numpy as np
 
 class Swarm:
-    def __init__(self, positions, velocities, dim, constraints, strategy):
-        # si almacenarmaos las particulas en un array de objetos, tendriamos que hacer muchos bucles, lecturas y escrituras de atributos, mucha busqueda de memoria
-        # todo esto se volvería dificil de implementar sin duplicar codigo y queremos un PSO con distintas versiones y modular
-        self.positions = np.asarray(positions, dtype=float)   # (Numero particulas, Dimension)
-        self.velocities = np.asarray(velocities, dtype=float)  # (N, D)
+    """
+    The class stores the full state of the swarm, including particle positions,
+    velocities, personal bests, and the global best solution found so far. It also
+    handles boundary strategies and the main state updates performed during the run.
+    """
+    def __init__(self, positions: np.ndarray, velocities: np.ndarray, dim: int, constraints: tuple[float, float], strategy: str) -> None:
+        """
+        Initialize the swarm with particle positions, velocities, and search space settings.
+
+        Args:
+            positions (np.ndarray): Initial positions of the particles.
+            velocities (np.ndarray): Initial velocities of the particles.
+            dim (int): Dimension of the function.
+            constraints (tuple[float, float]): Lower and upper bounds of the search space.
+            strategy (str): Boundary handling strategy to apply after position updates.
+        """
+        # Particles are stored as NumPy arrays instead of Python objects
+        # This avoids unnecessary loops and attribute access
+        self.positions = np.asarray(positions, dtype=float)   # (Number of particles, Dimension)
+        self.velocities = np.asarray(velocities, dtype=float) # (Number of particles, Dimension)
         self.dim = dim
-        self.pbest_positions = positions.copy()     # (N, D)
-        self.pbest_values = np.full(positions.shape[0], np.inf, dtype=float)  # (N,)
+        self.pbest_positions = positions.copy() # (Number of particles, Dimension)
+        self.pbest_values = np.full(positions.shape[0], np.inf, dtype=float)  # (Number of particles,)
         self.b_gposition = np.zeros(self.dim, dtype=float)
         self.b_gvalue = np.inf
         self.n_particles, self.dim = self.positions.shape
@@ -18,60 +39,86 @@ class Swarm:
         self.upper_bounds = np.full(self.dim, high, dtype=float)
 
         self.strategy = strategy
-        
-        #para hacer debug
         self.current_values = np.full(self.n_particles, np.inf, dtype=float)
     
-    def clamp_strategy(self):
-        #Para que ninguna partícula se salga de los límites del problema.
-        #recorta cada coordenada de self.positions para que quede entre los limites
+    def clamp_strategy(self) -> None:
+        """
+        Keep particle positions inside the search bounds by clipping each coordinate.
+        """
         np.clip(self.positions, self.lower_bounds, self.upper_bounds, out=self.positions)
 
-    def reflect_strategy(self):
-        # No implementa múltiples rebotes
-        # Máscara de los que se pasan por arriba
+    def reflect_strategy(self) -> None:
+        """
+        Reflect particles back into the valid range when they cross the bounds.
+        This implementation only handles a single rebound.
+        """
         mask_high = self.positions > self.upper_bounds
-        # Máscara de los que se pasan por abajo
         mask_low = self.positions < self.lower_bounds
 
-        # Reflejar posiciones
         self.positions[mask_high] = (
-            self.upper_bounds[mask_high] -
-            (self.positions[mask_high] - self.upper_bounds[mask_high])
+            self.upper_bounds[mask_high]
+            - (self.positions[mask_high] - self.upper_bounds[mask_high])
         )
 
         self.positions[mask_low] = (
-            self.lower_bounds[mask_low] +
-            (self.lower_bounds[mask_low] - self.positions[mask_low])
+            self.lower_bounds[mask_low]
+            + (self.lower_bounds[mask_low] - self.positions[mask_low])
         )
 
-        # Invertir velocidad SOLO en esas dimensiones
+        # Reverse the velocity only in the dimensions that hit the bounds
         self.velocities[mask_high | mask_low] *= -1
 
-        # (Opcional de seguridad) Asegura que queda dentro por si hubo salto enorme: un solo rebote
+        # Extra safety step in case a particle moved too far
         np.clip(self.positions, self.lower_bounds, self.upper_bounds, out=self.positions)
-        
 
-    def update_personal_bests(self, values):
-        self.current_values = values.copy()  #copia el fitness actual de todas las particulas
-        mask_improved = values < self.pbest_values #mascara booleana que dice si cada particula ha mejorado su posicion actual o no
-        
-        #actualizamos las que han mejorado
+    def update_personal_bests(self, values: np.ndarray) -> None:
+        """
+        Update each particle's personal best if the current value is better.
+
+        Args:
+            values (np.ndarray): Current fitness values of all particles.
+        """
+        # Copies the actual fitness value of all the particles
+        self.current_values = values.copy()
+        # Boolean mask that indicates whether each particle has improved its current position or not
+        mask_improved = values < self.pbest_values
+
+        # We update the ones that have improved
         self.pbest_values[mask_improved] = values[mask_improved]
         self.pbest_positions[mask_improved] = self.positions[mask_improved]
 
-    def update_b_global(self):
-        index = np.argmin(self.pbest_values) #mejor resultado de todo el swarm
+    def update_b_global(self) -> None:
+        """
+        Update the global best solution found by the swarm.
+        """
+        index = np.argmin(self.pbest_values)
         value = self.pbest_values[index]
 
         if value < self.b_gvalue:
             self.b_gvalue = value
             self.b_gposition = self.pbest_positions[index].copy()
 
-    def update_velocities(self, w, c1, c2, r1, r2, social_best):
+    def update_velocities(self, w: float, c1: float, c2: float, r1: np.ndarray, r2: np.ndarray, social_best: np.ndarray) -> None:
+        """
+        Update particle velocities using the standard PSO rule.
+
+        Args:
+            w (float): Inertia coefficient.
+            c1 (float): Cognitive coefficient.
+            c2 (float): Social coefficient.
+            r1 (np.ndarray): Random values for the cognitive term.
+            r2 (np.ndarray): Random values for the social term.
+            social_best (np.ndarray): Best social position used in the update.
+        """
         self.velocities = (w * self.velocities) + (c1 * r1 *(self.pbest_positions - self.positions)) + (c2 * r2 *(social_best - self.positions))
 
-    def update_positions(self):
+    def update_positions(self) -> None:
+        """
+        Update particle positions and apply the selected boundary handling strategy.
+
+        Raises:
+            ValueError: If the selected strategy is not valid.
+        """
         self.positions += self.velocities
 
         match self.strategy:
@@ -80,10 +127,16 @@ class Swarm:
             case "reflect":
                 return self.reflect_strategy()
             case "None":
-                return 
+                return
             case _:
                 raise ValueError("Invalid strategy")
 
-    def initialize_bests_from_values(self, values):
+    def initialize_bests_from_values(self, values: np.ndarray) -> None:
+        """
+        Initialize personal and global best values from the first fitness evaluation.
+
+        Args:
+            values (np.ndarray): Initial fitness values of all particles.
+        """
         self.update_personal_bests(values)
         self.update_b_global()

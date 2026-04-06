@@ -4,6 +4,15 @@ import pso.objectives.functions as f
 
 class Objective:
     def __init__(self, name, function, constraints, optimum_value, optimum_point):
+        """_summary_
+
+        Args:
+            name (_type_): _description_
+            function (_type_): _description_
+            constraints (_type_): _description_
+            optimum_value (_type_): _description_
+            optimum_point (_type_): _description_
+        """
         self.name = name
         self.function = function
         self.constraints = constraints
@@ -51,6 +60,9 @@ def get_objective(name):
 def optimum_point(objective, dim):
     #Genera el punto óptimo de una función para una dimensión dada
     return objective.optimum_point(dim)
+
+def optimum_value(objective):
+    return objective.optimum_value
 
 def bounds_array(objective, dim):
     #Genera arrays con límites inferiores y superiores

@@ -5,7 +5,7 @@ import pso.core.swarm as s
 import pso.core.result as r
 
 class PSO:
-    def __init__(self, n_particles, fitness_f, dim, constraints, strategy, fitness_policy, topology, tol, max_iter, w, c1, c2, evaluator):
+    def __init__(self, n_particles, fitness_f, dim, constraints, strategy, fitness_policy, topology, tol, max_iter, patience, imp_min, w, c1, c2, optimum_value, evaluator):
         self.n_particles = n_particles
         self.fitness_f = fitness_f
         self.dim = dim
@@ -15,10 +15,13 @@ class PSO:
         self.topology = topology
         self.tol = tol
         self.max_iter = max_iter
-        self.evaluator = evaluator
+        self.patience = patience
+        self.imp_min = imp_min
         self.w = w
         self.c1 = c1
         self.c2 = c2
+        self.optimum_value = optimum_value
+        self.evaluator = evaluator
         self.swarm = None
         self.penalty_lambda=float(1e4)
 
@@ -70,7 +73,8 @@ class PSO:
         best_fitness_by_iter = []
         fitness_eval_time_by_iter = []
         iterations = 0
-        trajectories = []
+        counter = 0
+        trajectories = [] if self.dim <= 3 else None # No tiene sentido almacenar trayectorias para dimensiones mayores que 3, ya que no se puede visualizar
         best_positions_by_iter = []
 
 
@@ -93,7 +97,9 @@ class PSO:
             best_fitness_by_iter.append(float(self.swarm.b_gvalue))
 
             #2.5- Se registran los datos
-            trajectories.append(self.swarm.positions.copy())  # ??????
+            if trajectories is not None:
+                trajectories.append(self.swarm.positions.copy())
+
             best_positions_by_iter.append(self.swarm.b_gposition.copy()) # ??????
             
             #3- Se mueven las particulas
@@ -107,9 +113,19 @@ class PSO:
 
             iterations = i + 1
             
-            #4- Criterio de parada
-            if abs(b_global - self.swarm.b_gvalue) < self.tol:
+            #4- Criterios de parada
+            if abs(b_global - self.swarm.b_gvalue) < self.imp_min:
+                counter += 1
+            else:
+                counter = 0
+            
+            if counter >= self.patience:
                 break
+
+            if self.optimum_value is not None:
+                if abs(self.swarm.b_gvalue - self.optimum_value) < self.tol:
+                    break
+
             b_global = self.swarm.b_gvalue
             
         total_time = perf_counter() - pso_start
@@ -122,7 +138,6 @@ class PSO:
             fitness_eval_time_by_iter,
             best_fitness_by_iter,
             iterations,
-            trajectories,
             best_positions_by_iter
         )
 

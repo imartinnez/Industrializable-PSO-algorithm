@@ -19,10 +19,13 @@ class Instance:
     mode: str
         
     topology: str = "global"
+    patience: float = 100
+    imp_min: float = 1e-8
     tol: float = 0.0
     w: float = 0.7
     c1: float = 1.5
     c2: float = 1.5
+    optimum_value: float | None = None
 
     def run_instance(self):
         
@@ -38,10 +41,13 @@ class Instance:
             topology=self.topology,
             tol=self.tol,
             max_iter=self.max_iter,
+            patience = self.patience,
+            imp_min = self.imp_min,
             evaluator=evaluator,
             w=self.w,
             c1=self.c1,
-            c2=self.c2
+            c2=self.c2,
+            optimum_value=self.optimum_value
         )
 
         result = pso.run(seed=self.seed)
@@ -51,7 +57,7 @@ class Instance:
 
 
 
-def make_instances(objectives, dims, seeds, max_iter, n_particles, strategy, fitness_policy, mode, topology="global", tol=0.0, w=0.7, c1=1.5, c2=1.5):
+def make_instances(objectives, dims, seeds, max_iter, n_particles, strategy, fitness_policy, mode, topology="global", patience=100, imp_min=1e-8, tol=0.0, w=0.7, c1=1.5, c2=1.5):
     instances = []
 
     for objective_name in objectives:
@@ -66,12 +72,15 @@ def make_instances(objectives, dims, seeds, max_iter, n_particles, strategy, fit
                         constraints=objective.constraints,
                         seed=seed,
                         max_iter=max_iter,
+                        patience = patience,
+                        imp_min = imp_min,
                         n_particles=n_particles,
                         strategy=strategy,
                         fitness_policy=fitness_policy,
                         mode=mode,
                         topology=topology,
                         tol=tol,
+                        optimum_value=objective.optimum_value,
                         w=w,
                         c1=c1,
                         c2=c2
@@ -94,12 +103,12 @@ def run_suite(instances):
             "fitness_policy": instance.fitness_policy,
             "mode": instance.mode,
             "topology": instance.topology,
-            "best_position": result.best_position,
-            "best_value": result.best_value,
+            "best_position": result.b_position,
+            "best_value": result.b_value,
             "total_time": result.total_time,
             "fitness_eval_time_total": result.fitness_eval_time_total,
-            "iterations_executed": result.iterations_executed,
             "best_fitness_by_iter": result.best_fitness_by_iter,
+            "iterations_executed": result.iterations,
         }
 
         results.append(row)
