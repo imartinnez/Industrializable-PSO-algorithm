@@ -14,8 +14,8 @@ import pso.viz.animator as a
 # grid search
 # analisis
 
-# ── Configuración de visualización ───────────────────────────────────────────
-VISUALIZE        = True    # ← Cambia esto a False para saltar la animación
+# Configuración de visualización
+VISUALIZE        = True
 VIZ_OBJECTIVE    = "rastrigin"
 VIZ_FPS          = 30
 

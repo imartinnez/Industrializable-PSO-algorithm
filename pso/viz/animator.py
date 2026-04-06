@@ -4,7 +4,7 @@ import matplotlib.animation as animation
 from matplotlib.gridspec import GridSpec
 
 
-# ── Helpers internos ────────────────────────────────────────────────────────
+# Helpers internos
 
 def _build_grid(fitness_f, constraints, resolution=250):
     """Malla 2D para el fondo de contorno/superficie."""
@@ -42,7 +42,7 @@ def _save_or_show(anim, save_path, fps, dpi):
     print(f"Guardado en: {save_path}")
 
 
-# ── Animación 2D ─────────────────────────────────────────────────────────────
+# Animación 2D
 
 def animate_2d(result, fitness_f, constraints,
                title="PSO 2D", save_path=None, fps=15, dpi=120):
@@ -63,11 +63,11 @@ def animate_2d(result, fitness_f, constraints,
     n_frames   = len(trajs)
     low, high  = constraints
 
-    # ── Malla de fondo ──────────────────────────────────────────────────────
+    # Malla de fondo
     print("Construyendo malla 2D…")
     X, Y, Z = _build_grid(fitness_f, constraints)
 
-    # ── Figura: dos paneles ─────────────────────────────────────────────────
+    # Figura: dos paneles
     fig = plt.figure(figsize=(12, 5))
     fig.suptitle(title, fontsize=13, fontweight="bold")
     gs  = GridSpec(1, 2, width_ratios=[2, 1], wspace=0.35)
@@ -75,7 +75,7 @@ def animate_2d(result, fitness_f, constraints,
     ax_s = fig.add_subplot(gs[0])   # panel enjambre
     ax_c = fig.add_subplot(gs[1])   # panel convergencia
 
-    # ── Panel enjambre ──────────────────────────────────────────────────────
+    # Panel enjambre
     # Contorno con escala logarítmica si los valores lo permiten
     zmin = max(Z.min(), 1e-10)
     levels = np.exp(np.linspace(np.log(zmin), np.log(Z.max()), 40))
@@ -102,7 +102,7 @@ def animate_2d(result, fitness_f, constraints,
                     fontsize=9, va="top",
                     bbox=dict(boxstyle="round", facecolor="white", alpha=0.6))
 
-    # ── Panel convergencia ──────────────────────────────────────────────────
+    # Panel convergencia
     ax_c.set_xlabel("Frame")
     ax_c.set_ylabel("Mejor fitness")
     ax_c.set_title("Convergencia")
@@ -120,7 +120,7 @@ def animate_2d(result, fitness_f, constraints,
         ax_c.set_ylim(min(pos_vals) * 0.1, max(fit_frames) * 10)
         ax_c.set_yscale("log")
 
-    # ── FuncAnimation ───────────────────────────────────────────────────────
+    # FuncAnimation
     def init():
         scat_particles.set_offsets(np.empty((0, 2)))
         scat_gbest.set_offsets(np.empty((0, 2)))
@@ -160,7 +160,7 @@ def animate_2d(result, fitness_f, constraints,
     return anim
 
 
-# ── Animación 3D ─────────────────────────────────────────────────────────────
+# Animación 3D
 
 def animate_3d(result, fitness_f, constraints,
                title="PSO 3D", save_path=None, fps=12, dpi=110):
@@ -181,7 +181,7 @@ def animate_3d(result, fitness_f, constraints,
     print("Construyendo malla 3D…")
     X, Y, Z = _build_grid(fitness_f, constraints, resolution=60)
 
-    # ── Figura ──────────────────────────────────────────────────────────────
+    # Figura
     fig = plt.figure(figsize=(12, 5))
     fig.suptitle(title, fontsize=13, fontweight="bold")
     gs  = GridSpec(1, 2, width_ratios=[2, 1], wspace=0.3)
@@ -189,7 +189,7 @@ def animate_3d(result, fitness_f, constraints,
     ax3 = fig.add_subplot(gs[0], projection="3d")
     ax_c = fig.add_subplot(gs[1])
 
-    # ── Superficie (estática) ───────────────────────────────────────────────
+    # Superficie (estática)
     ax3.plot_surface(X, Y, Z, cmap="inferno", alpha=0.5,
                      linewidth=0, antialiased=True)
     ax3.set_xlabel("x₁", fontsize=8)
@@ -215,7 +215,7 @@ def animate_3d(result, fitness_f, constraints,
                       fontsize=8, va="top",
                       bbox=dict(boxstyle="round", facecolor="white", alpha=0.6))
 
-    # ── Panel convergencia ──────────────────────────────────────────────────
+    # Panel convergencia
     ax_c.set_xlabel("Frame")
     ax_c.set_ylabel("Mejor fitness")
     ax_c.set_title("Convergencia")
@@ -229,7 +229,7 @@ def animate_3d(result, fitness_f, constraints,
         ax_c.set_ylim(min(pos_vals) * 0.1, max(fit_frames) * 10)
         ax_c.set_yscale("log")
 
-    # ── FuncAnimation ───────────────────────────────────────────────────────
+    # FuncAnimation
     # blit=False obligatorio en 3D (Axes3D no lo soporta)
     azims = np.linspace(-60, 300, n_frames)   # rotación completa de la cámara
 
