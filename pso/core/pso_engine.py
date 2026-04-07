@@ -15,7 +15,10 @@ class PSO:
     This class manages the full PSO execution, including particle initialization,
     fitness evaluation, best value updates, stopping criteria, and final result storage.
     """
-    def __init__(self, n_particles: int, fitness_f: Callable[[np.ndarray], float], dim: int, constraints: tuple[float, float], strategy: str, fitness_policy: str, topology: str, tol: float, max_iter: int, patience: int, imp_min: float, w: float, c1: float, c2: float, optimum_value: float | None, evaluator: Any) -> None:
+    def __init__(self, n_particles: int, fitness_f: Callable[[np.ndarray], float], 
+                 dim: int, constraints: tuple[float, float], strategy: str, fitness_policy: str, 
+                 topology: str, tol: float, max_iter: int, patience: int, imp_min: float, 
+                 w: float, c1: float, c2: float, optimum_value: float | None, evaluator: Any) -> None:
         """
         Initialize the PSO object with the main optimization settings.
 

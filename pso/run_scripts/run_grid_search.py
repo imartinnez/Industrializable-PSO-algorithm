@@ -1,3 +1,8 @@
+# @author: Íñigo Martínez Jiménez
+# This module defines the grid search utilities used to test different PSO
+# parameter combinations, compare the custom implementation with the PySwarm
+# baseline, and save the resulting raw outputs, summaries, and best configurations
+
 from itertools import product
 import pandas as pd
 
@@ -9,48 +14,74 @@ from pso.io.logging import setup_logging
 from pso.io.save_results import save_csv, save_json
 
 
-def convergence_auc(curve):
-    """AUC simple de la curva de convergencia."""
+def convergence_auc(curve: list[float]) -> float:
+    """
+    Compute a simple AUC of the convergence curve.
+
+    Args:
+        curve (list[float]): History of the best fitness values.
+
+    Returns:
+        float: Mean value of the convergence curve.
+    """
+    # A lower value means that, on average, the algorithm stayed closer
+    # to good solutions throughout the run
     if len(curve) == 0:
         return float("inf")
     return sum(curve) / len(curve)
 
 
-def convergence_auc_gap(curve, optimum_value):
-    """AUC del gap al óptimo por iteración."""
+def convergence_auc_gap(curve: list[float], optimum_value: float) -> float:
+    """
+    Compute the AUC of the gap to the optimum across the iterations.
+
+    Args:
+        curve (list[float]): History of the best fitness values.
+        optimum_value (float): Known optimum value of the objective function.
+
+    Returns:
+        float: Mean gap to the optimum over the full convergence curve.
+    """
     if len(curve) == 0:
         return float("inf")
+
     gaps = [abs(v - optimum_value) for v in curve]
     return sum(gaps) / len(gaps)
 
 
-def pso_grid_search(
-    objective_names,
-    dims,
-    seeds,
-    modes,
-    n_particles_grid,
-    w_grid,
-    c1_grid,
-    c2_grid,
-    max_iter_grid,
-    strategy="clamp",
-    fitness_policy="plain",
-    topology="global",
-    patience=100,
-    imp_min=1e-8,
-    tol=1e-12,
-    logger=None,
-):
+def pso_grid_search(objective_names: list[str], dims: list[int], seeds: list[int], modes: list[str], n_particles_grid: list[int], w_grid: list[float], c1_grid: list[float], c2_grid: list[float], max_iter_grid: list[int], strategy: str = "clamp", fitness_policy: str = "plain", topology: str = "global", patience: int = 100, imp_min: float = 1e-8, tol: float = 1e-12, logger=None) -> pd.DataFrame:
+    """
+    Run a grid search over several PSO parameter combinations.
+
+    Args:
+        objective_names (list[str]): Objective functions to evaluate.
+        dims (list[int]): Dimensions to test.
+        seeds (list[int]): Random seeds used for reproducibility.
+        modes (list[str]): Evaluation modes to compare.
+        n_particles_grid (list[int]): Candidate values for the number of particles.
+        w_grid (list[float]): Candidate values for the inertia coefficient.
+        c1_grid (list[float]): Candidate values for the cognitive coefficient.
+        c2_grid (list[float]): Candidate values for the social coefficient.
+        max_iter_grid (list[int]): Candidate values for the maximum number of iterations.
+        strategy (str): Boundary handling strategy.
+        fitness_policy (str): Fitness evaluation policy.
+        topology (str): Swarm topology.
+        patience (int): Number of iterations allowed without meaningful improvement.
+        imp_min (float): Minimum improvement required to reset the patience counter.
+        tol (float): Tolerance used for early stopping near the optimum.
+        logger: Optional logger used to record progress.
+
+    Returns:
+        pd.DataFrame: DataFrame containing the full grid search results.
+    """
     rows = []
     i = 1
 
     for objective_name in objective_names:
         objective = o.get_objective(objective_name)
 
-        for dim, seed, mode, n_particles, w, c1, c2, max_iter in product(
-            dims, seeds, modes, n_particles_grid, w_grid, c1_grid, c2_grid, max_iter_grid
-        ):
+        # product generates all possible combinations of the selected parameters
+        for dim, seed, mode, n_particles, w, c1, c2, max_iter in product(dims, seeds, modes, n_particles_grid, w_grid, c1_grid, c2_grid, max_iter_grid):
             if mode == "pyswarm":
                 result_row = run_pyswarm(
                     objective_name,
@@ -64,6 +95,8 @@ def pso_grid_search(
                     tol=tol,
                 )
 
+                # PySwarm does not expose the same internal metrics as the custom PSO,
+                # so some fields are left as None to keep a common output schema
                 row = {
                     "objective": objective_name,
                     "dim": dim,
@@ -169,17 +202,20 @@ def pso_grid_search(
 
 
 if __name__ == "__main__":
+    # Objectives, dimensions, seeds, and modes included in the grid search
     objective_names = ["sphere", "rastrigin"]
     dims = [2, 10]
     seeds = [1, 2]
     modes = ["sequential", "threading", "pyswarm"]
 
+    # Parameter grids explored during the search
     n_particles_grid = [30, 50]
     w_grid = [0.5, 0.7]
     c1_grid = [1.0, 1.5]
     c2_grid = [1.0, 1.5]
     max_iter_grid = [500]
 
+    # Create the output folder and logger for this grid search run
     outdir = make_run_dir("grid_search")
     logger = setup_logging("pso.run_grid_search", outdir / "run_grid_search.log")
 
@@ -207,6 +243,7 @@ if __name__ == "__main__":
     raw_path = outdir / "grid_search_full.csv"
     save_csv(df, raw_path)
 
+    # Save the configuration used in the experiment so it can be reproduced later
     config = {
         "objective_names": objective_names,
         "dims": dims,
@@ -226,6 +263,7 @@ if __name__ == "__main__":
     }
     save_json(config, outdir / "config.json")
 
+    # Aggregate results across seeds to compare parameter combinations more easily
     summary = (
         df.groupby(
             ["objective", "dim", "mode", "n_particles", "w", "c1", "c2", "max_iter"],
@@ -249,6 +287,7 @@ if __name__ == "__main__":
     summary_path = outdir / "grid_search_summary.csv"
     save_csv(summary, summary_path)
 
+    # Keep the best configuration for each objective, dimension, and mode
     best = summary.groupby(["objective", "dim", "mode"], as_index=False).first()
     best_path = outdir / "grid_search_best.csv"
     save_csv(best, best_path)

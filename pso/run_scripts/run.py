@@ -1,3 +1,8 @@
+# @author: Íñigo Martínez Jiménez
+# This module defines a simple script to run and compare individual PSO
+# executions, showing the results of two custom configurations and the
+# PySwarm reference implementation in a clear console summary
+
 from pyswarm import pso
 import numpy as np
 
@@ -6,19 +11,17 @@ import pso.experiments.benchmarks as i
 from pso.io.paths import make_run_dir
 from pso.io.logging import setup_logging
 
-# README
-# explicar por que se ha utilizado matrices en vez de listas de objetos en el README
-# COMENTARIOS Y TYPE HINTING: benchmarks, V0, V1, V2
-# arreglar visualizaciones y entden, poner para almacenar experimentos (timer en el nombre), ademas de limitar las dimensiones
-# analisis
 
 if __name__ == "__main__":
 
+    # Create the output folder and logger for this run
     outdir = make_run_dir("single_run")
     logger = setup_logging("pso.run", outdir / "run.log")
     
+    # Load the benchmark function used in this example
     sphere = o.get_objective("sphere")
 
+    # First custom PSO run using the sequential evaluator
     instance1 = i.Instance(
         name="sphere_d10",
         fitness_f=sphere.function,
@@ -37,6 +40,7 @@ if __name__ == "__main__":
         optimum_value=sphere.optimum_value
     )
 
+    # Second custom PSO run using the multiprocessing evaluator
     instance2 = i.Instance(
         name="sphere2_d10",
         fitness_f=sphere.function,
@@ -55,6 +59,7 @@ if __name__ == "__main__":
         optimum_value=sphere.optimum_value
     )
     
+    # Run the first instance and print its main metrics
     result1 = instance1.run_instance()
 
     pct1 = 100 * result1.fitness_eval_time_total / result1.total_time
@@ -66,6 +71,10 @@ if __name__ == "__main__":
     print(f"  eval time    {result1.fitness_eval_time_total:.3f} s  ({pct1:.1f}%)")
     print(f"  best pos     [{pos1}]")
 
+
+
+
+    # Run the second instance and print its main metrics
     result2 = instance2.run_instance()
 
     pct2 = 100 * result2.fitness_eval_time_total / result2.total_time
@@ -75,9 +84,12 @@ if __name__ == "__main__":
     print(f"  iterations   {result2.iterations} / {instance2.max_iter}")
     print(f"  total time   {result2.total_time:.3f} s")
     print(f"  eval time    {result2.fitness_eval_time_total:.3f} s  ({pct2:.1f}%)")
-    print(f"  best pos     [{pos2}]\n\n\ns")
+    print(f"  best pos     [{pos2}]\n\n\n")
 
-    # pyswarm
+
+
+
+    # Run PySwarm as an external reference with comparable parameters
     lb = [sphere.constraints[0]] * instance1.dim
     ub = [sphere.constraints[1]] * instance1.dim
 

@@ -35,7 +35,8 @@ class Swarm:
     velocities, personal bests, and the global best solution found so far. It also
     handles boundary strategies and the main state updates performed during the run.
     """
-    def __init__(self, positions: np.ndarray, velocities: np.ndarray, dim: int, constraints: tuple[float, float], strategy: str) -> None:
+    def __init__(self, positions: np.ndarray, velocities: np.ndarray, 
+                 dim: int, constraints: tuple[float, float], strategy: str) -> None:
         """
         Initialize the swarm with particle positions, velocities, and search space settings.
 
@@ -121,7 +122,8 @@ class Swarm:
             self.b_gvalue = value
             self.b_gposition = self.pbest_positions[index].copy()
 
-    def update_velocities(self, w: float, c1: float, c2: float, r1: np.ndarray, r2: np.ndarray, social_best: np.ndarray) -> None:
+    def update_velocities(self, w: float, c1: float, c2: float, r1: np.ndarray, 
+                          r2: np.ndarray, social_best: np.ndarray) -> None:
         """
         Update particle velocities using the standard PSO rule.
 

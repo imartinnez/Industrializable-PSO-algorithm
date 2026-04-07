@@ -3,7 +3,6 @@
 # experiments, including the Instance data container, a helper to generate 
 # experiment configurations, and a function to execute a full benchmark suite
 
-
 from dataclasses import dataclass
 from typing import Callable
 
@@ -12,8 +11,8 @@ import pso.core.pso_engine as p
 import pso.objectives.registry as r
 
 
-# We use @dataclass because automatically generates useful methods such as 
-# __init__, __repr__, and this class is only meant to store data
+# We use @dataclass because it automatically generates useful methods such as
+# __init__ and __repr__, and this class is only meant to store data
 @dataclass
 class Instance:
     """
@@ -64,8 +63,8 @@ class Instance:
         Run one PSO experiment instance with its stored configuration.
 
         Returns:
-            p.r.Result: Result of the PSO execution.
-        """""
+            Result: Result of the PSO execution.
+        """
         evaluator = choose_evaluator(self.mode, self.fitness_f)
 
         try:
@@ -79,8 +78,8 @@ class Instance:
                 topology=self.topology,
                 tol=self.tol,
                 max_iter=self.max_iter,
-                patience = self.patience,
-                imp_min = self.imp_min,
+                patience=self.patience,
+                imp_min=self.imp_min,
                 evaluator=evaluator,
                 w=self.w,
                 c1=self.c1,
@@ -90,15 +89,15 @@ class Instance:
 
             result = pso.run(seed=self.seed)
         finally:
-            evaluator.shutdown()   # ← libera el pool siempre, incluso si hay error
+            # Always close the evaluator resources, even if an error happens
+            evaluator.shutdown()
         
         return result
 
 
-
-
-def make_instances(objectives: list[str], dims: list[int], seeds: list[int], max_iter: int, n_particles: int, strategy: str, fitness_policy: str, mode: str, 
-                   topology: str = "global", patience: int = 100, imp_min: float = 1e-8, tol: float = 0.0, w: float = 0.7, c1: float = 1.5, c2: float = 1.5) -> list[Instance]:
+def make_instances(objectives: list[str], dims: list[int], seeds: list[int], max_iter: int,
+                    n_particles: int, strategy: str, fitness_policy: str, mode: str, topology: str = "global",
+                      patience: int = 100, imp_min: float = 1e-8, tol: float = 0.0, w: float = 0.7, c1: float = 1.5, c2: float = 1.5) -> list[Instance]:
     """
     Build a list of experiment instances from a set of objectives, dimensions, and seeds.
 

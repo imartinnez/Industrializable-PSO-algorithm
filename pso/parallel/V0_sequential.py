@@ -31,6 +31,11 @@ class VO_sequential:
         """
         return np.array([self.fitness_f(position) for position in positions])
     
-    # Para que todos los evaluadores tengan la misma interfaz
     def shutdown(self) -> None:
+        """
+        Keep the same interface as the other evaluators.
+
+        In the sequential version there are no external resources to release,
+        so this method does nothing.
+        """
         pass

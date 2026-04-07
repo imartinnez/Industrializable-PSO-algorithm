@@ -13,7 +13,8 @@ from pyswarm import pso
 import pso.objectives.registry as r
 
 
-def run_pyswarm(objective_name: str, dim: int, seed: int, *, n_particles: int, w: float, c1: float, c2: float, max_iter: int, tol: float) -> dict:
+def run_pyswarm(objective_name: str, dim: int, seed: int, *, n_particles: int,
+                 w: float, c1: float, c2: float, max_iter: int, tol: float) -> dict:
     """
     Run the PySwarm baseline on a given objective function.
 

@@ -38,6 +38,11 @@ class V1_threading:
 
         return np.array(values, dtype=float)
     
-    # Para que todos los evaluadores tengan la misma interfaz
     def shutdown(self) -> None:
+        """
+        Keep the same interface as the other evaluators.
+
+        In this version there are no persistent resources to release,
+        so this method does nothing.
+        """
         pass
