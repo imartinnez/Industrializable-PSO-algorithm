@@ -1,7 +1,30 @@
 # @author: Íñigo Martínez Jiménez
+# This module defines the Swarm class used in the PSO
 
 """
-This module defines the Swarm class used in the PSO.
+IMPORTANT: Read before proceeding
+
+Although the PSO could have been implemented as a list of Particle objects,
+in this project it was decided to represent the swarm using NumPy matrices and
+vectors within a Swarm class, as this approach better aligned
+with the architecture required by the problem statement.
+The main reason is not simply that NumPy is faster, but that the
+problem statement requires maintaining a common core of the algorithm and changing only the
+evaluation strategy depending on the version. Therefore, it is cleaner and
+more maintainable to work with a homogeneous global state of the swarm (positions,
+velocities, personal bests, and global best) rather than distributing that
+state among multiple individual objects.
+Furthermore, this representation makes it easier for the fitness evaluator to
+directly receive a block of particles and apply different
+concurrency strategies without having to modify the main engine.
+At the same time, storing the swarm in matrices does not imply that the
+implementation already corresponds to the vectorized V4 version: it is one thing to store
+the state in arrays and quite another for the entire evaluation and update
+to be performed in a fully vectorized manner, without Python loops per
+particle. In this case, the matrix structure provides a more
+coherent design foundation, improves integration with persistence, visualization, and benchmarking,
+and paves the way for more complete vectorization in
+future versions.
 """
 
 import numpy as np

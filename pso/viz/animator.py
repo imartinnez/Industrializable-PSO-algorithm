@@ -2,6 +2,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib.gridspec import GridSpec
+import logging
+from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 # Helpers internos
@@ -35,11 +39,15 @@ def _save_or_show(anim, save_path, fps, dpi):
     if save_path is None:
         plt.show()
         return
-    if save_path.endswith(".gif"):
-        anim.save(save_path, writer="pillow", fps=fps)
+
+    save_path = Path(save_path)
+
+    if save_path.suffix == ".gif":
+        anim.save(str(save_path), writer="pillow", fps=fps)
     else:
-        anim.save(save_path, writer="ffmpeg", fps=fps, dpi=dpi)
-    print(f"Guardado en: {save_path}")
+        anim.save(str(save_path), writer="ffmpeg", fps=fps, dpi=dpi)
+
+    logger.info("Saved animation to %s", save_path)
 
 
 # Animación 2D
@@ -64,13 +72,13 @@ def animate_2d(result, fitness_f, constraints,
     low, high  = constraints
 
     # Malla de fondo
-    print("Construyendo malla 2D…")
+    logger.info("Building 2D grid")
     X, Y, Z = _build_grid(fitness_f, constraints)
 
     # Figura: dos paneles
     fig = plt.figure(figsize=(12, 5))
     fig.suptitle(title, fontsize=13, fontweight="bold")
-    gs  = GridSpec(1, 2, width_ratios=[2, 1], wspace=0.35)
+    gs  = GridSpec(1, 2, width_ratios=[3, 2], wspace=0.35)
 
     ax_s = fig.add_subplot(gs[0])   # panel enjambre
     ax_c = fig.add_subplot(gs[1])   # panel convergencia
@@ -109,7 +117,7 @@ def animate_2d(result, fitness_f, constraints,
     ax_c.grid(True, alpha=0.3)
 
     # Curva completa en gris de fondo (referencia)
-    ax_c.plot(range(n_frames), fit_frames, color="lightgray", linewidth=0.8)
+    ax_c.plot(range(n_frames), fit_frames, color="lightgray", linewidth=0.4, alpha=0.3)
     # Curva viva que crece con la animación
     line_live, = ax_c.plot([], [], color="royalblue", linewidth=1.8)
     dot_live,  = ax_c.plot([], [], "ro", markersize=6)
@@ -178,13 +186,13 @@ def animate_3d(result, fitness_f, constraints,
     n_frames   = len(trajs)
     low, high  = constraints
 
-    print("Construyendo malla 3D…")
+    logger.info("Building 3D grid")
     X, Y, Z = _build_grid(fitness_f, constraints, resolution=60)
 
     # Figura
     fig = plt.figure(figsize=(12, 5))
     fig.suptitle(title, fontsize=13, fontweight="bold")
-    gs  = GridSpec(1, 2, width_ratios=[2, 1], wspace=0.3)
+    gs  = GridSpec(1, 2, width_ratios=[3, 2], wspace=0.3)
 
     ax3 = fig.add_subplot(gs[0], projection="3d")
     ax_c = fig.add_subplot(gs[1])
@@ -199,7 +207,7 @@ def animate_3d(result, fitness_f, constraints,
 
     # Precalcula los valores z de todas las partículas en todos los frames
     # para no recalcular dentro de update() (lento)
-    print("Precalculando fitness de partículas…")
+    logger.info("Precomputing particle fitness values")
     all_z     = [np.array([fitness_f(p) for p in trajs[i]]) for i in range(n_frames)]
     all_gz    = [fitness_f(gbests[i])                        for i in range(n_frames)]
 
@@ -220,7 +228,7 @@ def animate_3d(result, fitness_f, constraints,
     ax_c.set_ylabel("Mejor fitness")
     ax_c.set_title("Convergencia")
     ax_c.grid(True, alpha=0.3)
-    ax_c.plot(range(n_frames), fit_frames, color="lightgray", linewidth=0.8)
+    ax_c.plot(range(n_frames), fit_frames, color="lightgray", linewidth=0.4, alpha=0.3)
     line_live, = ax_c.plot([], [], color="royalblue", linewidth=1.8)
     dot_live,  = ax_c.plot([], [], "ro", markersize=6)
     ax_c.set_xlim(0, n_frames)

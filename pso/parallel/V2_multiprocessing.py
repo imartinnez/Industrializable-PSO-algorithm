@@ -1,9 +1,7 @@
 # @author: Íñigo Martínez Jiménez
+# This module defines the multiprocessing evaluator used in the PSO.
+# evaluating the fitness of all particles in parallel using separate processes.
 
-"""
-This module defines the multiprocessing evaluator used in the PSO.
-It evaluates the fitness of all particles in parallel using separate processes.
-"""
 
 from collections.abc import Callable
 from concurrent.futures import ProcessPoolExecutor
@@ -25,20 +23,14 @@ class V2_multiprocessing:
             chunksize (int): Number of tasks sent together to each worker process.
         """
         self.fitness_f = fitness_f
-        self.max_workers = max_workers
         self.chunksize = chunksize
+        self._executor = ProcessPoolExecutor(max_workers=max_workers)  # ← UNA sola vez
+
 
     def evaluate(self, positions: np.ndarray) -> np.ndarray:
-        """
-        Evaluate the fitness of all particles using multiprocessing.
-
-        Args:
-            positions (np.ndarray): Positions of all particles.
-
-        Returns:
-            np.ndarray: Fitness value of each particle.
-        """
-        with ProcessPoolExecutor(max_workers=self.max_workers) as executor:
-            values = list(executor.map(self.fitness_f, positions, chunksize=self.chunksize))
-
+        
+        values = list(self._executor.map(self.fitness_f, positions, chunksize=self.chunksize))
         return np.array(values, dtype=float)
+    
+    def shutdown(self):
+        self._executor.shutdown(wait=True)

@@ -1,35 +1,31 @@
 from pyswarm import pso
 import numpy as np
-import os
-
 
 import pso.objectives.registry as o
 import pso.experiments.benchmarks as i
-import pso.viz.animator as a
+from pso.io.paths import make_run_dir
+from pso.io.logging import setup_logging
 
-# explicar por que se ha utilizado matrices en vez de listas de objetos particula
-# COMENTARIOS Y TYPE HINTING
-# arrglar lo de las semillas
-# arreglar visualizaciones y entden, poner para almacenar experimentos (timer en el nombre)
-# grid search
+# README
+# explicar por que se ha utilizado matrices en vez de listas de objetos en el README
+# COMENTARIOS Y TYPE HINTING: benchmarks, V0, V1, V2
+# arreglar visualizaciones y entden, poner para almacenar experimentos (timer en el nombre), ademas de limitar las dimensiones
 # analisis
-
-# Configuración de visualización
-VISUALIZE        = True
-VIZ_OBJECTIVE    = "rastrigin"
-VIZ_FPS          = 30
 
 if __name__ == "__main__":
 
+    outdir = make_run_dir("single_run")
+    logger = setup_logging("pso.run", outdir / "run.log")
+    
     sphere = o.get_objective("sphere")
 
     instance1 = i.Instance(
         name="sphere_d10",
         fitness_f=sphere.function,
-        dim=10,
+        dim=3,
         constraints=sphere.constraints,
         seed=1,
-        max_iter=2000,
+        max_iter=1000,
         patience=100,
         imp_min=1e-8,
         n_particles=50,
@@ -44,10 +40,10 @@ if __name__ == "__main__":
     instance2 = i.Instance(
         name="sphere2_d10",
         fitness_f=sphere.function,
-        dim=10,
+        dim=3,
         constraints=sphere.constraints,
         seed=1,
-        max_iter=2000,
+        max_iter=1000,
         patience=50,
         imp_min=1e-6,
         n_particles=50,
@@ -55,33 +51,35 @@ if __name__ == "__main__":
         fitness_policy="plain",
         topology="global",
         tol=1e-50,
-        mode="threading",
+        mode="multiprocessing",
         optimum_value=sphere.optimum_value
     )
     
     result1 = instance1.run_instance()
 
-    print("PSO result:")
-    print("best value:", result1.b_value)
-    print("total time:", result1.total_time)
-    print("fitness eval total:", result1.fitness_eval_time_total)
-    print("iterations:", result1.iterations)
-    #print("curve:", result.best_fitness_by_iter)
+    pct1 = 100 * result1.fitness_eval_time_total / result1.total_time
+    pos1 = "  ".join(f"{x}" for x in result1.b_position)
+    print(f"\n{instance1.name}")
+    print(f"  best value   {result1.b_value:.6e}")
+    print(f"  iterations   {result1.iterations} / {instance1.max_iter}")
+    print(f"  total time   {result1.total_time:.3f} s")
+    print(f"  eval time    {result1.fitness_eval_time_total:.3f} s  ({pct1:.1f}%)")
+    print(f"  best pos     [{pos1}]")
 
     result2 = instance2.run_instance()
 
-    print("PSO 2 result:")
-    print("best value 2:", result2.b_value)
-    print("total time 2:", result2.total_time)
-    print("fitness eval total 2:", result2.fitness_eval_time_total)
-    print("iterations 2:", result2.iterations)
-    #print("curve:", result.best_fitness_by_iter)
-
-    print("\n\n\n")
+    pct2 = 100 * result2.fitness_eval_time_total / result2.total_time
+    pos2 = "  ".join(f"{x}" for x in result2.b_position)
+    print(f"\n{instance2.name}")
+    print(f"  best value   {result2.b_value:.6e}")
+    print(f"  iterations   {result2.iterations} / {instance2.max_iter}")
+    print(f"  total time   {result2.total_time:.3f} s")
+    print(f"  eval time    {result2.fitness_eval_time_total:.3f} s  ({pct2:.1f}%)")
+    print(f"  best pos     [{pos2}]\n\n\ns")
 
     # pyswarm
-    lb = [sphere.constraints[0]] * 10
-    ub = [sphere.constraints[1]] * 10
+    lb = [sphere.constraints[0]] * instance1.dim
+    ub = [sphere.constraints[1]] * instance1.dim
 
     np.random.seed(1)
     xopt, fopt = pso(
@@ -95,42 +93,18 @@ if __name__ == "__main__":
         maxiter=2000,
         minfunc=1e-50,
         minstep=1e-50
-)
+    )
 
-    print("PySwarm result: ")
-    print(fopt)
+    pos_ref = "  ".join(f"{x}" for x in xopt)
+    print(f"\npyswarm (reference)")
+    print(f"  best value   {fopt:.6e}")
+    print(f"  best pos     [{pos_ref}]")
 
-    if VISUALIZE:
-
-        os.makedirs("results", exist_ok=True)
-        obj = o.get_objective(VIZ_OBJECTIVE)
-
-        # 2D
-        print("\n=== Visualización 2D ===")
-        result_2d = i.Instance(
-            name="viz_2d", fitness_f=obj.function, dim=2,
-            constraints=obj.constraints, seed=1, max_iter=300,patience=50,imp_min=1e-6,
-            n_particles=40, strategy="clamp", fitness_policy="plain", topology="global",
-            tol=0.0, mode="sequential",
-        ).run_instance()
-
-        a.animate_2d(
-            result=result_2d, fitness_f=obj.function, constraints=obj.constraints,
-            title=f"PSO – {VIZ_OBJECTIVE} (d=2)",
-            save_path=f"results/viz_{VIZ_OBJECTIVE}_2d.gif", fps=VIZ_FPS,
-        )
-
-        # 3D
-        print("\n=== Visualización 3D ===")
-        result_3d = i.Instance(
-            name="viz_3d", fitness_f=obj.function, dim=3,
-            constraints=obj.constraints, seed=1, max_iter=300,patience=50,imp_min   =1e-6,
-            n_particles=40, strategy="clamp", fitness_policy="plain", topology="global",
-            tol=0.0, mode="sequential",
-        ).run_instance()
-
-        a.animate_3d(
-            result=result_3d, fitness_f=obj.function, constraints=obj.constraints,
-            title=f"PSO – {VIZ_OBJECTIVE} (d=3)",
-            save_path=f"results/viz_{VIZ_OBJECTIVE}_3d.gif", fps=VIZ_FPS,
-        )
+    sep = "-" * 57
+    print(f"\n{sep}")
+    print(f"  {'instance':<18} {'best value':>12}   {'iters':>6}   {'time':>8}")
+    print(sep)
+    print(f"  {instance1.name:<18} {result1.b_value:>12.3e}   {result1.iterations:>6}   {result1.total_time:>6.3f} s")
+    print(f"  {instance2.name:<18} {result2.b_value:>12.3e}   {result2.iterations:>6}   {result2.total_time:>6.3f} s")
+    print(f"  {'pyswarm':<18} {fopt:>12.3e}   {'--':>6}   {'--':>8}")
+    print(sep)

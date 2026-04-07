@@ -1,10 +1,8 @@
 # @author: Íñigo Martínez Jiménez
+# This module defines the evaluator selector used in the PSO.
+# It centralizes the logic for choosing how particle fitness is evaluated, so the
+# PSO engine does not need to be modified every time a new evaluator is added
 
-"""
-This module defines the evaluator selector used in the PSO.
-It centralizes the logic for choosing how particle fitness is evaluated, so the
-PSO engine does not need to be modified every time a new evaluator is added.
-"""
 
 from typing import Any
 

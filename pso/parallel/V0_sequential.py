@@ -1,9 +1,6 @@
 # @author: Íñigo Martínez Jiménez
-
-"""
-This module defines the sequential evaluator used in the PSO.
-It evaluates the fitness of all particles one by one, without using parallelism.
-"""
+# This module defines the sequential evaluator used in the PSO
+# evaluating the fitness of all particles one by one, without using parallelism
 
 import numpy as np
 
@@ -33,3 +30,7 @@ class VO_sequential:
             np.ndarray: Fitness value of each particle.
         """
         return np.array([self.fitness_f(position) for position in positions])
+    
+    # Para que todos los evaluadores tengan la misma interfaz
+    def shutdown(self) -> None:
+        pass

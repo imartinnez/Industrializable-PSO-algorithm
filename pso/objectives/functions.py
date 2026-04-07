@@ -1,8 +1,6 @@
 # @author: Íñigo Martínez Jiménez
+# This module defines the benchmark objective functions used to test the PSO
 
-"""
-This module defines the benchmark objective functions used to test the PSO.
-"""
 
 import numpy as np
 

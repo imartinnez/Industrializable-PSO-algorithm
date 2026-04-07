@@ -1,10 +1,8 @@
 # @author: Íñigo Martínez Jiménez
+# This module defines the benchmark utilities used to build and run PSO 
+# experiments, including the Instance data container, a helper to generate 
+# experiment configurations, and a function to execute a full benchmark suite
 
-"""
-This module defines the benchmark utilities used to build and run PSO 
-experiments, including the Instance data container, a helper to generate 
-experiment configurations, and a function to execute a full benchmark suite.
-"""
 
 from dataclasses import dataclass
 from typing import Callable
@@ -70,27 +68,30 @@ class Instance:
         """""
         evaluator = choose_evaluator(self.mode, self.fitness_f)
 
-        pso = p.PSO(
-            n_particles=self.n_particles,
-            fitness_f=self.fitness_f,
-            dim=self.dim,
-            constraints=self.constraints,
-            strategy=self.strategy,
-            fitness_policy=self.fitness_policy,
-            topology=self.topology,
-            tol=self.tol,
-            max_iter=self.max_iter,
-            patience = self.patience,
-            imp_min = self.imp_min,
-            evaluator=evaluator,
-            w=self.w,
-            c1=self.c1,
-            c2=self.c2,
-            optimum_value=self.optimum_value
-        )
+        try:
+            pso = p.PSO(
+                n_particles=self.n_particles,
+                fitness_f=self.fitness_f,
+                dim=self.dim,
+                constraints=self.constraints,
+                strategy=self.strategy,
+                fitness_policy=self.fitness_policy,
+                topology=self.topology,
+                tol=self.tol,
+                max_iter=self.max_iter,
+                patience = self.patience,
+                imp_min = self.imp_min,
+                evaluator=evaluator,
+                w=self.w,
+                c1=self.c1,
+                c2=self.c2,
+                optimum_value=self.optimum_value
+            )
 
-        result = pso.run(seed=self.seed)
-
+            result = pso.run(seed=self.seed)
+        finally:
+            evaluator.shutdown()   # ← libera el pool siempre, incluso si hay error
+        
         return result
 
 

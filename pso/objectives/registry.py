@@ -1,10 +1,7 @@
 # @author: Íñigo Martínez Jiménez
-
-"""
-This module defines the objective function registry used in the PSO,
-storing the benchmark functions together with their search bounds,
-known optimum values, and optimum points.
-"""
+# This module defines the objective function registry used in the PSO,
+# storing the benchmark functions together with their search bounds,
+# known optimum values, and optimum points
 
 from collections.abc import Callable
 import numpy as np

@@ -1,8 +1,6 @@
 # @author: Íñigo Martínez Jiménez
+# This module defines the PSO class used to run the optimization process
 
-"""
-This module defines the PSO class used to run the optimization process.
-"""
 
 import numpy as np
 from time import perf_counter
@@ -189,7 +187,7 @@ class PSO:
 
             b_global = self.swarm.b_gvalue  # update reference best
 
-            total_time = perf_counter() - pso_start
+        total_time = perf_counter() - pso_start
         
         # return final result with best solution and collected metrics
         result = r.Result(
@@ -200,7 +198,8 @@ class PSO:
             fitness_eval_time_by_iter,
             best_fitness_by_iter,
             iterations,
-            best_positions_by_iter
+            best_positions_by_iter,
+            trajectories
         )
 
         return result

@@ -1,11 +1,9 @@
 # @author: Íñigo Martínez Jiménez
+# This module defines the Result data container used to store the output of a
+# PSO execution. The class groups together the final best solution found by the 
+# optimizer, the most important timing metrics, the convergence history across
+# iterations, and the sequence of global best positions recorded during the run
 
-"""
-This module defines the Result data container used to store the output of a
-PSO execution. The class groups together the final best solution found by the 
-optimizer, the most important timing metrics, the convergence history across
-iterations, and the sequence of global best positions recorded during the run.
-"""
 
 from dataclasses import dataclass
 import numpy as np
@@ -27,6 +25,7 @@ class Result:
         best_fitness_by_iter: History of the global best fitness value after each iteration.
         iterations: Number of iterations actually executed.
         best_positions_by_iter: History of the global best position at each iteration.
+        trajectories: History of the points the particles have visited.
     """
     b_position: np.ndarray
     b_value: float
@@ -36,3 +35,4 @@ class Result:
     best_fitness_by_iter: list[float]
     iterations: int
     best_positions_by_iter: list[np.ndarray] | None
+    trajectories: list[np.ndarray] | None = None

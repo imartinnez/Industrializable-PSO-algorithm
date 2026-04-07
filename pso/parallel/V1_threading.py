@@ -1,9 +1,6 @@
 # @author: Íñigo Martínez Jiménez
-
-"""
-This module defines the threaded evaluator used in the PSO.
-It evaluates the fitness of all particles in parallel using threads.
-"""
+# This module defines the threaded evaluator used in the PSO.
+# evaluating the fitness of all particles in parallel using threads
 
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
@@ -40,3 +37,7 @@ class V1_threading:
             values = list(executor.map(self.fitness_f, positions))
 
         return np.array(values, dtype=float)
+    
+    # Para que todos los evaluadores tengan la misma interfaz
+    def shutdown(self) -> None:
+        pass
