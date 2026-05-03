@@ -7,6 +7,8 @@ from collections.abc import Callable
 import numpy as np
 
 import pso.objectives.functions as f
+import pso.objectives.vectorized_functions as vf
+
 
 
 class Objective:
@@ -15,7 +17,7 @@ class Objective:
     """
 
     def __init__(self, name: str, function: Callable[[np.ndarray], float], constraints: tuple[float, float], 
-                 optimum_value: float, optimum_point: Callable[[int], np.ndarray]) -> None:
+                 optimum_value: float, optimum_point: Callable[[int], np.ndarray], vectorized_function: Callable[[np.ndarray], np.ndarray]) -> None:
         """
         Initialize an objective function with its metadata.
 
@@ -25,12 +27,14 @@ class Objective:
             constraints (tuple[float, float]): Lower and upper bounds of the search space.
             optimum_value (float): Known optimum value of the function.
             optimum_point (Callable[[int], np.ndarray]): Function that returns the optimum point for a given dimension.
+            vectorized_function (Callable[[np.ndarray], np.ndarray]): Vectoried function to evaluate.
         """
         self.name = name
         self.function = function
         self.constraints = constraints
         self.optimum_value = optimum_value
         self.optimum_point = optimum_point
+        self.vectorized_function = vectorized_function
 
 
 OBJECTIVES = {
@@ -40,6 +44,7 @@ OBJECTIVES = {
         constraints=(-5.12, 5.12),
         optimum_value=0.0,
         optimum_point=lambda dim: np.zeros(dim),
+        vectorized_function=vf.sphere_vec,
     ),
     "rosenbrock": Objective(
         name="rosenbrock",
@@ -47,6 +52,7 @@ OBJECTIVES = {
         constraints=(-5.0, 10),
         optimum_value=0.0,
         optimum_point=lambda dim: np.ones(dim),
+        vectorized_function=vf.rosenbrock_vec,
     ),
     "rastrigin": Objective(
         name="rastrigin",
@@ -54,6 +60,7 @@ OBJECTIVES = {
         constraints=(-5.12, 5.12),
         optimum_value=0.0,
         optimum_point=lambda dim: np.zeros(dim),
+        vectorized_function=vf.rastrigin_vec,
     ),
     "ackley": Objective(
         name="ackley",
@@ -61,6 +68,7 @@ OBJECTIVES = {
         constraints=(-32.768, 32.768),
         optimum_value=0.0,
         optimum_point=lambda dim: np.zeros(dim),
+        vectorized_function=vf.ackley_vec,
     ),
 }
 

@@ -9,6 +9,7 @@ from typing import Any
 
 import pso.core.swarm as s
 import pso.core.result as r
+from pso.core.topology import choose_topology
 
 class PSO:
     """
@@ -64,6 +65,9 @@ class PSO:
         if self.fitness_policy == "penalty" and self.strategy in ["clamp", "reflect"]:
             print("Strategy changed to 'None' because of the use of Penalty Policy")
             self.strategy = "None"
+
+        # Instantiate the topology strategy that determines the social best for each particle
+        self.topology = choose_topology(self.topology)
     
     def generate_particles(self) -> None:
         """
@@ -169,9 +173,10 @@ class PSO:
             # generate random factors and update movement
             r1 = np.random.rand(self.n_particles, self.dim)
             r2 = np.random.rand(self.n_particles, self.dim)
-            b_global_matrix = np.broadcast_to(self.swarm.b_gposition, (self.n_particles, self.dim))
 
-            self.swarm.update_velocities(self.w, self.c1, self.c2, r1, r2, b_global_matrix)
+            # Delegate to topology strategy: returns the social guide per particle (n_particles, dim)
+            social_best = self.topology.get_social_best(self.swarm)
+            self.swarm.update_velocities(self.w, self.c1, self.c2, r1, r2, social_best)
             self.swarm.update_positions()
 
             iterations = i + 1

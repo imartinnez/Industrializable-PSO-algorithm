@@ -37,6 +37,8 @@ class Instance:
         c1 (float): Cognitive coefficient.
         c2 (float): Social coefficient.
         optimum_value (float | None): Known optimum value of the function, if available.
+        vectorized_f (Callable | None = None): Vectorized version of fitness_f for V4 mode.
+        latency_range (tuple[float, float]): Simulated I/O latency range in seconds, used only in V3 async mode.
     """
     name: str
     fitness_f: Callable
@@ -57,6 +59,8 @@ class Instance:
     c1: float = 1.5
     c2: float = 1.5
     optimum_value: float | None = None
+    vectorized_f: Callable | None = None
+    latency_range: tuple[float, float] = (0.005, 0.02)
 
     def run_instance(self):
         """
@@ -65,7 +69,7 @@ class Instance:
         Returns:
             Result: Result of the PSO execution.
         """
-        evaluator = choose_evaluator(self.mode, self.fitness_f)
+        evaluator = choose_evaluator(self.mode, self.fitness_f, vectorized_f=self.vectorized_f, vectorized_f=self.vectorized_f)
 
         try:
             pso = p.PSO(
@@ -128,6 +132,10 @@ def make_instances(objectives: list[str], dims: list[int], seeds: list[int], max
 
         for dim in dims:
             for seed in seeds:
+                # For vectorized mode, pass the batch version of the function.
+                # For all other modes this stays None and is ignored.
+                vec_f = objective.vectorized_function if mode == "vectorized" else None
+
                 instances.append(
                     Instance(
                         name=f"{objective_name}_d{dim}_s{seed}",
@@ -147,7 +155,8 @@ def make_instances(objectives: list[str], dims: list[int], seeds: list[int], max
                         optimum_value=objective.optimum_value,
                         w=w,
                         c1=c1,
-                        c2=c2
+                        c2=c2,
+                        vectorized_f=vec_f,   # None for all modes except 'vectorized'
                     )
                 )
 

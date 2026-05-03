@@ -80,12 +80,12 @@ PSO_Algorithm/
 └──────┬──────────────────┬───────────────────────┬───────────────────┘
        │                  │                       │
        ▼                  ▼                       ▼
-┌─────────────┐   ┌──────────────┐        ┌─────────────┐
-│ experiments/ │   │     viz/     │        │     io/     │
-│ benchmarks   │   │  animator    │        │  logging    │
-│ pyswarm_ref  │   │  make_viz    │        │  paths      │
+┌──────────────┐   ┌──────────────┐        ┌──────────────┐
+│ experiments/ │   │     viz/     │        │     io/      │
+│ benchmarks   │   │  animator    │        │  logging     │
+│ pyswarm_ref  │   │  make_viz    │        │  paths       │
 └──────┬───────┘   └──────┬───────┘        │  save_results│
-       │                  │                └──────┬──────┘
+       │                  │                └──────┬───────┘
        ▼                  │                       │
 ┌─────────────┐           │                       │
 │   core/     │◄──────────┘                       │
