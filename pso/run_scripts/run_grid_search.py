@@ -142,6 +142,8 @@ def pso_grid_search(objective_names: list[str], dims: list[int], seeds: list[int
                     c1=c1,
                     c2=c2,
                     optimum_value=objective.optimum_value,
+                    vectorized_f=objective.vectorized_function if mode == "vectorized" else None,
+                    latency_range=(0.005, 0.02)
                 )
 
                 result = instance.run_instance()

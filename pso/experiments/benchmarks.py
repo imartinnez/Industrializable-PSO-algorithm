@@ -69,7 +69,7 @@ class Instance:
         Returns:
             Result: Result of the PSO execution.
         """
-        evaluator = choose_evaluator(self.mode, self.fitness_f, vectorized_f=self.vectorized_f, vectorized_f=self.vectorized_f)
+        evaluator = choose_evaluator(self.mode, self.fitness_f, vectorized_f=self.vectorized_f, latency_range=self.latency_range)
 
         try:
             pso = p.PSO(
