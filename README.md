@@ -61,10 +61,18 @@ PSO_Algorithm/
     ├── run_scripts/                 # Puntos de entrada principales
     │   ├── run.py                   #   Ejecución individual + comparación
     │   ├── run_benchmarks.py        #   Suite completa de benchmarks
-    │   └── run_grid_search.py       #   Búsqueda de hiperparámetros
+    │   ├── run_grid_search.py       #   Búsqueda de hiperparámetros
+    │   └── run_datacenter_case.py   #   Caso de uso aplicado (data center)
+    ├── use_case/                    # Caso de uso aplicado
+    │   ├── datacenter_cooling.py    #   Modelo térmico/energético + objetivo
+    │   └── datacenter_plots.py      #   Plots específicos del caso
     ├── tests/                       # Tests unitarios
-    │   └── tests_pso.py             #   (reproducibilidad, bounds, monotonía, etc.)
+    │   ├── tests_pso.py             #   (reproducibilidad, bounds, monotonía, etc.)
+    │   └── tests_datacenter_case.py #   Tests del caso de uso
     └── results/                     # Resultados generados (no se sube a Git)
+
+docs/
+└── datacenter_case_study.md        # Explicación detallada del caso de uso
 ```
 
 ---
@@ -253,6 +261,7 @@ python -m pytest pso/tests/tests_pso.py -v
 | `python -m pso.run_scripts.run_benchmarks` | Suite de benchmarks (4 obj × 3 dims × 5 seeds × 3 modos) | CSV + JSON + log |
 | `python -m pso.run_scripts.run_grid_search` | Grid search de hiperparámetros | CSV + JSON + log |
 | `python -m pso.viz.make_viz` | Generación de animaciones 2D/3D | GIF |
+| `python -m pso.run_scripts.run_datacenter_case` | Caso de uso: refrigeración de un data center | CSV + JSON + PNG + log |
 | `python -m pytest pso/tests/ -v` | Tests unitarios | Consola |
 
 ---
@@ -576,6 +585,26 @@ Esto garantiza que con la misma seed y los mismos parámetros se obtiene exactam
 En los benchmarks y grid search se utilizan siempre múltiples seeds (por defecto 5) para promediar resultados y evaluar la variabilidad. Las seeds usadas quedan registradas en el `config.json` de cada ejecución.
 
 **Nota sobre multiprocessing:** la reproducibilidad está garantizada para V0 y V1. En V2, el orden de finalización de los procesos puede variar, pero como cada proceso evalúa una partícula de forma independiente y el resultado se recoge en orden (la API de `executor.map` preserva el orden), los resultados finales son deterministas para la misma seed.
+
+---
+
+## Caso de uso: refrigeración de un data center
+
+Además de los benchmarks clásicos, el proyecto incluye un caso de uso aplicado donde el PSO optimiza la configuración de refrigeración de un data center simplificado. Cada partícula representa una configuración con 9 variables continuas: la temperatura de consigna del aire frío, las velocidades de 4 ventiladores y los caudales de 4 zonas. El objetivo es minimizar el consumo energético manteniendo las temperaturas de los racks dentro de límites seguros y con una distribución térmica razonablemente equilibrada.
+
+Para que el PSO pueda usar bounds heterogéneos sin tocar el core (que solo admite un par `(low, high)`), las variables se normalizan a `[0, 1]` y se decodifican a unidades físicas dentro de la propia función objetivo.
+
+**Ejecutar el caso:**
+
+```bash
+python -m pso.run_scripts.run_datacenter_case
+```
+
+Genera en `pso/results/datacenter_{timestamp}/` un resumen CSV, la curva de convergencia, un `config.json` reproducible, dos heatmaps de temperaturas (baseline y PSO), barras de energía y un plot de las variables óptimas.
+
+**Importante:** este caso de uso **no es una simulación física realista**. El modelo térmico es estático, no hay CFD, ni dinámica temporal, ni efectos de pasillo caliente/frío. Es una aproximación defendible como ejercicio académico, suficiente para mostrar el trade-off central entre energía y seguridad térmica, pero no para dimensionar una instalación real.
+
+La explicación detallada (variables, modelo térmico, consumo, penalizaciones, baseline, interpretación de resultados y lista completa de limitaciones) está en [`docs/datacenter_case_study.md`](docs/datacenter_case_study.md).
 
 ---
 
