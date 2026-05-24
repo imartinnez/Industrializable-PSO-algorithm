@@ -70,13 +70,14 @@ class Instance:
             Result: Result of the PSO execution.
         """
         evaluator = choose_evaluator(self.mode, self.fitness_f, vectorized_f=self.vectorized_f, latency_range=self.latency_range)
+        bounds = r.bounds_array_from_scalar(self.constraints, self.dim)
 
         try:
             pso = p.PSO(
                 n_particles=self.n_particles,
                 fitness_f=self.fitness_f,
                 dim=self.dim,
-                constraints=self.constraints,
+                constraints=bounds,
                 strategy=self.strategy,
                 fitness_policy=self.fitness_policy,
                 topology=self.topology,

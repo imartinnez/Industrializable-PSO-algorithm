@@ -17,7 +17,7 @@ class PSO:
     fitness evaluation, best value updates, stopping criteria, and final result storage.
     """
     def __init__(self, n_particles: int, fitness_f: Callable[[np.ndarray], float], 
-                 dim: int, constraints: tuple[float, float], strategy: str, fitness_policy: str, 
+                 dim: int, constraints: tuple[np.ndarray, np.ndarray], strategy: str, fitness_policy: str,
                  topology: str, tol: float, max_iter: int, patience: int, imp_min: float, 
                  w: float, c1: float, c2: float, optimum_value: float | None, evaluator: Any) -> None:
         """
@@ -27,7 +27,7 @@ class PSO:
             n_particles (int): Number of particles in the swarm.
             fitness_f (Callable[[np.ndarray], float]): Objective function to minimize.
             dim (int): Dimension of the function.
-            constraints (tuple[float, float]): Lower and upper bounds of the search space.
+            constraints (tuple[np.ndarray, np.ndarray]): Per-dimension lower and upper bounds.
             strategy (str): Boundary handling strategy.
             fitness_policy (str): Fitness evaluation policy.
             topology (str): Swarm topology.
@@ -74,11 +74,17 @@ class PSO:
         Generate the initial swarm and evaluate its first fitness values.
         """
         low, high = self.constraints
-        vmax = 0.2 * (high - low)  # max velocity based on search range
+        vmax = 0.2 * (high - low)  # max velocity based on search range per dimension
 
-        # initialize random positions and velocities
-        positions = np.random.uniform(low, high, size=(self.n_particles, self.dim))
-        velocities = np.random.uniform(-vmax, vmax, size=(self.n_particles, self.dim))
+        # initialize random positions and velocities with per-dimension bounds
+        positions = np.column_stack([
+            np.random.uniform(low[d], high[d], size=self.n_particles)
+            for d in range(self.dim)
+        ])
+        velocities = np.column_stack([
+            np.random.uniform(-vmax[d], vmax[d], size=self.n_particles)
+            for d in range(self.dim)
+        ])
 
         # create swarm with initial state
         self.swarm = s.Swarm(positions, velocities, self.dim, self.constraints, self.strategy)

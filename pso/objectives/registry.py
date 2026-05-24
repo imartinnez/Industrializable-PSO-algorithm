@@ -16,7 +16,7 @@ class Objective:
     Store the main information associated with one benchmark objective function.
     """
 
-    def __init__(self, name: str, function: Callable[[np.ndarray], float], constraints: tuple[float, float], 
+    def __init__(self, name: str, function: Callable[[np.ndarray], float], constraints: tuple[float, float],
                  optimum_value: float, optimum_point: Callable[[int], np.ndarray], vectorized_function: Callable[[np.ndarray], np.ndarray]) -> None:
         """
         Initialize an objective function with its metadata.
@@ -24,7 +24,7 @@ class Objective:
         Args:
             name (str): Name of the objective function.
             function (Callable[[np.ndarray], float]): Function to evaluate.
-            constraints (tuple[float, float]): Lower and upper bounds of the search space.
+            constraints (tuple[float, float]): Scalar lower and upper bounds (expanded per dimension via bounds_array).
             optimum_value (float): Known optimum value of the function.
             optimum_point (Callable[[int], np.ndarray]): Function that returns the optimum point for a given dimension.
             vectorized_function (Callable[[np.ndarray], np.ndarray]): Vectoried function to evaluate.
@@ -121,7 +121,7 @@ def optimum_value(objective: Objective) -> float:
 
 def bounds_array(objective: Objective, dim: int) -> tuple[np.ndarray, np.ndarray]:
     """
-    Build the lower and upper bound arrays for a given dimension.
+    Build the lower and upper bound arrays for a given objective and dimension.
 
     Args:
         objective (Objective): Objective function object.
@@ -130,6 +130,20 @@ def bounds_array(objective: Objective, dim: int) -> tuple[np.ndarray, np.ndarray
     Returns:
         tuple[np.ndarray, np.ndarray]: Lower and upper bound arrays.
     """
-    lower = np.full(dim, objective.constraints[0])
-    upper = np.full(dim, objective.constraints[1])
+    return bounds_array_from_scalar(objective.constraints, dim)
+
+
+def bounds_array_from_scalar(constraints: tuple[float, float], dim: int) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Expand a scalar bounds pair to per-dimension arrays.
+
+    Args:
+        constraints (tuple[float, float]): Scalar lower and upper bounds.
+        dim (int): Number of dimensions.
+
+    Returns:
+        tuple[np.ndarray, np.ndarray]: Lower and upper bound arrays of shape (dim,).
+    """
+    lower = np.full(dim, constraints[0], dtype=float)
+    upper = np.full(dim, constraints[1], dtype=float)
     return lower, upper

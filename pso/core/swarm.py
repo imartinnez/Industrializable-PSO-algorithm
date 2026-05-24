@@ -35,8 +35,8 @@ class Swarm:
     velocities, personal bests, and the global best solution found so far. It also
     handles boundary strategies and the main state updates performed during the run.
     """
-    def __init__(self, positions: np.ndarray, velocities: np.ndarray, 
-                 dim: int, constraints: tuple[float, float], strategy: str) -> None:
+    def __init__(self, positions: np.ndarray, velocities: np.ndarray,
+                 dim: int, constraints: tuple[np.ndarray, np.ndarray], strategy: str) -> None:
         """
         Initialize the swarm with particle positions, velocities, and search space settings.
 
@@ -44,7 +44,7 @@ class Swarm:
             positions (np.ndarray): Initial positions of the particles.
             velocities (np.ndarray): Initial velocities of the particles.
             dim (int): Dimension of the function.
-            constraints (tuple[float, float]): Lower and upper bounds of the search space.
+            constraints (tuple[np.ndarray, np.ndarray]): Per-dimension lower and upper bounds.
             strategy (str): Boundary handling strategy to apply after position updates.
         """
         # Particles are stored as NumPy arrays instead of Python objects
@@ -57,10 +57,8 @@ class Swarm:
         self.b_gposition = np.zeros(self.dim, dtype=float)
         self.b_gvalue = np.inf
         self.n_particles, self.dim = self.positions.shape
-        
-        low, high = constraints
-        self.lower_bounds = np.full(self.dim, low, dtype=float)
-        self.upper_bounds = np.full(self.dim, high, dtype=float)
+
+        self.lower_bounds, self.upper_bounds = constraints
 
         self.strategy = strategy
         self.current_values = np.full(self.n_particles, np.inf, dtype=float)

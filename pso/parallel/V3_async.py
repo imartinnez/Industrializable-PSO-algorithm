@@ -91,3 +91,6 @@ class V3_async:
         """
         values = asyncio.run(self.gather_all(positions))
         return np.array(values, dtype=float)
+
+    def shutdown(self) -> None:
+        pass

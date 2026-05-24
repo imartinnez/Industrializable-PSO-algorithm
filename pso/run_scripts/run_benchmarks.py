@@ -58,7 +58,7 @@ if __name__ == "__main__":
     objectives = ["sphere", "rosenbrock", "rastrigin", "ackley"]
     dims = [2, 10, 30]
     seeds = [1, 2, 3, 4, 5]
-    modes = ["sequential", "threading"]
+    modes = modes = ["sequential", "threading", "multiprocessing", "async", "vectorized"]
 
     # Parameters shared by all custom PSO runs
     common = dict(
