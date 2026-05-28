@@ -692,7 +692,7 @@ Se abre automáticamente en `http://localhost:8501`. No genera ficheros nuevos: 
 
 Este caso de uso **no es una simulación física realista**. El modelo térmico es estático, no hay CFD, ni dinámica temporal, ni efectos de pasillo caliente/frío. Es una aproximación defendible como ejercicio académico, suficiente para mostrar el trade-off central entre energía y seguridad térmica, pero no para dimensionar una instalación real.
 
-La explicación detallada (variables, modelo térmico, consumo, penalizaciones, baseline, interpretación de resultados y lista completa de limitaciones) está en [`docs/datacenter_case_study.md`](docs/datacenter_case_study.md).
+La explicación detallada (variables, modelo térmico, consumo, penalizaciones, baseline, interpretación de resultados y lista completa de limitaciones) está en [`use_case_description.md`](use_case_description.md).
 
 ---
 

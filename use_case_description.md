@@ -2,7 +2,7 @@
 
 Este documento explica el caso de uso aplicado del proyecto. La idea es coger el PSO que ya tenemos montado y aplicarlo a un problema con cierto sentido en ingeniería: ajustar cómo se refrigera un data center para gastar menos energía sin que los racks pasen de cierta temperatura.
 
-Aviso desde el principio: **esto no es una simulación física real**. Es un modelo simplificado a propósito para que el problema sea defendible como ejercicio de optimización, no un dimensionamiento real de instalación. Las limitaciones están al final del documento.
+**No es una simulación física real**. Es un modelo simplificado a propósito para que el problema sea defendible como ejercicio de optimización, no un dimensionamiento real de instalación. Las limitaciones están al final del documento.
 
 ---
 
