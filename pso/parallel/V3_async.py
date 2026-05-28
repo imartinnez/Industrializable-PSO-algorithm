@@ -94,4 +94,4 @@ class V3_async:
 
     def shutdown(self) -> None:
         """Release evaluator resources. No-op for the async evaluator."""
-    pass
+        pass

@@ -1,13 +1,16 @@
 # Caso de uso: refrigeración de un data center con PSO
 
-Este documento explica el caso de uso aplicado del proyecto. La idea es coger el PSO que ya tenemos montado y ajustar cómo se refrigera un data center para gastar menos energía sin que los racks pasen de cierta temperatura. Se trata de un modelo simplificado a propósito para que el problema sea defendible como ejercicio de optimización, no un dimensionamiento real de instalación. Las limitaciones están al final del documento.
+Este documento explica el caso de uso aplicado del proyecto. La idea es coger el PSO que ya tenemos montado y aplicarlo a un problema con cierto sentido en ingeniería: ajustar cómo se refrigera un data center para gastar menos energía sin que los racks pasen de cierta temperatura.
+
+Aviso desde el principio: **esto no es una simulación física real**. Es un modelo simplificado a propósito para que el problema sea defendible como ejercicio de optimización, no un dimensionamiento real de instalación. Las limitaciones están al final del documento.
 
 ---
 
-## Descripción
+## Por qué este caso
 
 Los data centers consumen mucha energía y una parte se va en refrigeración. Bajar el setpoint del aire frío evita problemas térmicos, pero dispara el consumo del chiller. Subirlo ahorra energía pero arriesga sobrecalentar racks. Lo mismo pasa con los ventiladores y el reparto de caudal por zonas: cuanto más rápido vayan, más enfrían, pero más consumen. Hay un trade-off claro entre energía y seguridad térmica, y un PSO es un buen candidato para encontrar un punto razonable.
 
+## Qué se optimiza
 
 Cada partícula del PSO representa una configuración completa del data center:
 
@@ -23,7 +26,7 @@ x = [T_set,
 
 Total: 9 variables continuas.
 
-### Detalle de implementación
+### Detalle de implementación: normalización
 
 El PSO de este proyecto acepta un único par de bounds `(low, high)` para todas las dimensiones, pero aquí los bounds son distintos (18-26, 0.3-1.0, 0.2-1.0). Para no tocar el núcleo, trabajo internamente con variables normalizadas en `[0, 1]` y las decodifico a unidades físicas dentro de la propia función objetivo. El PSO ve un problema en `[0, 1]^9`, y la función objetivo se encarga de pasar a unidades reales antes de calcular nada.
 
@@ -136,6 +139,38 @@ En la carpeta de la ejecución vas a encontrar:
 - `energy_breakdown.png`: desglose de energía (chiller, fans, airflow).
 - `convergence.png`: la curva de convergencia del PSO.
 - `variable_choice.png`: comparativa de las variables óptimas vs baseline.
+
+## Cuaderno de análisis
+
+El cuaderno `pso/analysis/datacenter_analysis.ipynb` carga la ejecución más reciente y reconstruye el escenario a partir de la seed para reevaluar baseline y PSO usando los módulos del paquete `use_case/`. Produce las mismas figuras que el script pero inline, con bloques de markdown explicando qué muestra cada una y cómo leer los resultados.
+
+```bash
+jupyter notebook pso/analysis/datacenter_analysis.ipynb
+```
+
+Es la vista pensada para revisar los resultados con calma: tablas comparativas, curva de convergencia, desglose energético, mapas térmicos y variables óptimas. Cada sección incluye un párrafo de discusión.
+
+## Dashboard interactivo (`app.py`)
+
+Para cuando hay que enseñarle los resultados al cliente, además del cuaderno hay un dashboard hecho con Streamlit que vive en la raíz del proyecto (`app.py`). Lee la carpeta `pso/results/` y muestra una vista web pensada como entregable comercial:
+
+- **KPIs grandes** arriba: ahorro energético, energía total, temperatura máxima, número de hotspots y mejora de fitness.
+- **Comparativa energética** con gráficos interactivos (Plotly): energía total y desglose por componente (chiller, ventiladores, caudal).
+- **Mapas térmicos** lado a lado (baseline y PSO) con escala de color común para que la comparación sea visual.
+- **Curva de convergencia** con la línea del baseline como referencia.
+- **Variables de control** optimizadas: setpoint, velocidades de los ventiladores y caudales por zona, todas comparadas con sus valores baseline.
+- **Resumen ejecutivo** en forma de tabla con todas las métricas y la diferencia absoluta y relativa.
+- **Sidebar** con la configuración del escenario, los parámetros del PSO usados, y un selector que permite cambiar entre las distintas ejecuciones que tengas guardadas en `pso/results/datacenter_*`.
+
+Para abrirlo:
+
+```bash
+streamlit run app.py
+```
+
+Se abre automáticamente en `http://localhost:8501`. No guarda nada nuevo: lee los resultados ya generados por `run_datacenter_case`.
+
+La paleta es corporativa (navy + emerald) y el chrome de Streamlit está ocultado con un bloque de CSS para que el resultado se vea más como una página web propia que como un script de prototipado. La idea es que si alguien tiene que enseñar esto en una reunión con cliente, no quede ridículo.
 
 ## Cómo interpretar los resultados
 

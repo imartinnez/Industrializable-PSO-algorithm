@@ -47,4 +47,4 @@ class V4_vectorized:
     
     def shutdown(self) -> None:
         """Release evaluator resources. No-op for the vectorized evaluator."""
-    pass
+        pass

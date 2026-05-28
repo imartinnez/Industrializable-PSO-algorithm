@@ -47,8 +47,8 @@ PSO_Algorithm/
     │   ├── V0_sequential.py         #   Evaluación secuencial (baseline)
     │   ├── V1_threading.py          #   Evaluación con hilos (ThreadPoolExecutor)
     │   ├── V2_multiprocessing.py    #   Evaluación con procesos (ProcessPoolExecutor)
-    │   ├── V3_async.py              #   Evaluación asíncrona (asyncio) [en desarrollo]
-    │   └── V4_vectorized.py         #   Evaluación vectorizada (NumPy) [en desarrollo]
+    │   ├── V3_async.py              #   Evaluación asíncrona (asyncio)
+    │   └── V4_vectorized.py         #   Evaluación vectorizada (NumPy)
     ├── experiments/                 # Orquestación de experimentos
     │   ├── benchmarks.py            #   Instance, make_instances, run_suite
     │   └── pyswarm_reference.py     #   Wrapper del baseline PySwarm externo
@@ -90,32 +90,42 @@ docs/
 ### Diagrama de dependencias entre módulos
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                         run_scripts/                                │
-│             run.py  ·  run_benchmarks.py  ·  run_grid_search.py     │
-└──────┬──────────────────┬───────────────────────┬───────────────────┘
-       │                  │                       │
-       ▼                  ▼                       ▼
-┌──────────────┐   ┌──────────────┐        ┌──────────────┐
-│ experiments/ │   │     viz/     │        │     io/      │
-│ benchmarks   │   │  animator    │        │  logging     │
-│ pyswarm_ref  │   │  make_viz    │        │  paths       │
-└──────┬───────┘   └──────┬───────┘        │  save_results│
-       │                  │                └──────┬───────┘
-       ▼                  │                       │
-┌─────────────┐           │                       │
-│   core/     │◄──────────┘                       │
-│  pso_engine │                                   │
-│  swarm      │           (io/ es utilizado por   │
-│  result     │            run_scripts/ y         │
-└──────┬──────┘            experiments/)          │
-       │                                          │
-       ▼                                          │
-┌─────────────┐   ┌──────────────┐                │
-│ objectives/ │   │  parallel/   │                │
-│  functions  │   │  evaluator   │◄───────────────┘
-│  registry   │   │  V0..V4      │
-└─────────────┘   └──────────────┘
+┌────────────────────────────────────────────────────────────────────────────────┐
+│                            run_scripts/  +  app.py                             │
+│   run · run_benchmarks · run_grid_search · run_datacenter_case · dashboard     │
+└────┬───────────────┬────────────────┬────────────────────────┬─────────────────┘
+     │               │                │                        │
+     ▼               ▼                ▼                        ▼
+┌──────────────┐ ┌──────────┐  ┌──────────────┐         ┌──────────────┐
+│ experiments/ │ │   viz/   │  │  use_case/   │         │     io/      │
+│ benchmarks   │ │ animator │  │  scenario    │         │  logging     │
+│ pyswarm_ref  │ │ make_viz │  │  encoding    │         │  paths       │
+└──────┬───────┘ └────┬─────┘  │  thermal     │         │  save_results│
+       │              │        │  energy      │         └──────┬───────┘
+       │              │        │  penalties   │                │
+       │              │        │  objective   │                │
+       │              │        │  plots       │                │
+       │              │        └──────┬───────┘                │
+       ▼              │               │                        │
+┌─────────────┐       │               │                        │
+│   core/     │◄──────┴───────────────┘                        │
+│  pso_engine │                                                │
+│  swarm      │             (io/ es utilizado por              │
+│  result     │              run_scripts/ y experiments/)      │
+│  topology   │                                                │
+└──────┬──────┘                                                │
+       │                                                       │
+       ▼                                                       │
+┌─────────────┐   ┌──────────────┐                             │
+│ objectives/ │   │  parallel/   │                             │
+│  functions  │   │  evaluator   │◄────────────────────────────┘
+│  vectorized │   │  V0..V4      │
+│  registry   │   └──────────────┘
+└─────────────┘
+
+   analysis/    (notebooks Jupyter que leen los CSV de pso/results/)
+   ├── benchmark_analysis.ipynb
+   └── datacenter_analysis.ipynb
 ```
 
 ### Decisiones principales
@@ -150,6 +160,10 @@ Cada ejecución queda definida por una `Instance` (dataclass) que encapsula todo
 
 Cada ejecución crea su propio directorio con formato `{tipo}_{YYYYMMDD_HHMMSS}` dentro de `pso/results/`. Esto evita sobreescribir resultados anteriores y permite comparar ejecuciones a lo largo del tiempo. Se guardan los resultados en CSV (fácil de cargar con pandas y de inspeccionar manualmente) y la configuración en JSON (legible y serializable). Se eligió CSV sobre formatos binarios porque el volumen de datos es manejable y la inspección manual es importante durante el desarrollo.
 
+**6. Caso de uso aislado en su propio paquete.**
+
+El caso de uso aplicado (data center) vive en `pso/use_case/`, separado del registry de objetivos canónicos. La razón es que sus bounds son heterogéneos (rangos distintos por variable) y no tiene óptimo conocido, mientras que el registry está pensado para benchmarks académicos. El caso de uso se conecta al motor del PSO normalizando sus variables a `[0, 1]` y decodificándolas a unidades físicas dentro de la propia función objetivo, sin modificar el core.
+
 ---
 
 ## Instalación
@@ -176,20 +190,23 @@ python -m venv .venv
 source .venv/bin/activate
 
 # 3. Instalar dependencias
-pip install numpy pandas matplotlib pyswarm streamlit plotly jupyter nbconvert
+pip install -r requirements.txt
 ```
+
+Las versiones exactas están fijadas en `requirements.txt` para garantizar reproducibilidad del entorno.
 
 ### Lista de dependencias
 
-| Paquete      | Uso                                               |
-| ------------ | ------------------------------------------------- |
+| Paquete      | Uso                                                |
+| ------------ | -------------------------------------------------- |
 | `numpy`      | Operaciones numéricas, representación del enjambre |
 | `pandas`     | Gestión de resultados tabulares, exportación CSV   |
 | `matplotlib` | Visualización, animaciones 2D/3D                   |
+| `plotly`     | Gráficos interactivos del dashboard                |
 | `pyswarm`    | Implementación PSO externa usada como referencia   |
 | `streamlit`  | Dashboard interactivo del caso de uso (`app.py`)   |
-| `plotly`     | Gráficos interactivos del dashboard                |
-| `jupyter`    | Ejecución de los cuadernos de análisis             |
+| `jupyter`, `ipykernel`, `nbconvert` | Ejecución de los cuadernos de análisis |
+| `pytest`     | Tests unitarios                                    |
 
 ---
 
@@ -216,7 +233,7 @@ sphere_d10
 
 ### Suite de benchmarks
 
-Ejecuta el PSO sobre las 4 funciones objetivo en dimensiones 2, 10 y 30, con 5 seeds y los modos secuencial, threading y PySwarm:
+Ejecuta el PSO sobre las 4 funciones objetivo en dimensiones 2, 10 y 30, con 5 seeds y los cinco modos de evaluación propios (sequential, threading, multiprocessing, async, vectorized) más el baseline externo PySwarm:
 
 ```bash
 python -m pso.run_scripts.run_benchmarks
@@ -269,7 +286,7 @@ python -m pytest pso/tests/tests_pso.py -v
 | Comando | Descripción | Salida |
 | ------- | ----------- | ------ |
 | `python -m pso.run_scripts.run` | Ejecución individual comparativa | Consola + log |
-| `python -m pso.run_scripts.run_benchmarks` | Suite de benchmarks (4 obj × 3 dims × 5 seeds × 3 modos) | CSV + JSON + log |
+| `python -m pso.run_scripts.run_benchmarks` | Suite de benchmarks (4 obj × 3 dims × 5 seeds × 5 modos + pyswarm) | CSV + JSON + log |
 | `python -m pso.run_scripts.run_grid_search` | Grid search de hiperparámetros | CSV + JSON + log |
 | `python -m pso.viz.make_viz` | Generación de animaciones 2D/3D | GIF |
 | `python -m pso.run_scripts.run_datacenter_case` | Caso de uso: refrigeración de un data center | CSV + JSON + PNG + log |
@@ -392,13 +409,27 @@ Usa `concurrent.futures.ProcessPoolExecutor` para ejecutar evaluaciones en proce
 
 **Serialización**: las posiciones (arrays NumPy) y la función fitness deben ser serializables con `pickle` para transferirse entre procesos. Las funciones definidas a nivel de módulo (como las de `functions.py`) son serializables sin problema; las lambdas o closures no lo son.
 
-### V3 — Asyncio (en desarrollo)
+### V3 — Asyncio
 
-Evaluación asíncrona con `asyncio`. La idea es diseñar un caso donde el fitness tenga latencia variable (simulando un servicio externo o I/O asimétrico) para que `asyncio.gather` aporte una mejora real frente a la evaluación secuencial.
+```python
+# V3_async.py
+async def eval_one(self, position):
+    await asyncio.sleep(random.uniform(*self.latency_range))
+    return self.fitness_f(position)
 
-### V4 — Vectorizada (en desarrollo)
+values = asyncio.run(self.gather_all(positions))
+```
 
-Evaluación completamente vectorizada con NumPy, donde tanto la evaluación de fitness como la actualización de velocidades y posiciones se realizan sin bucles Python por partícula. Se aprovecha el "paralelismo implícito" de las operaciones BLAS/LAPACK que NumPy delega al hardware.
+Evaluación asíncrona con `asyncio.gather`. Cada evaluación de partícula se envuelve en una corrutina que simula latencia variable con `asyncio.sleep`; todas las corrutinas se lanzan a la vez y el event loop las reanuda según se completan. En un caso real esa espera sería una llamada I/O (API externa, base de datos, etc.); aquí se simula porque las funciones benchmark son CPU-bound. Tiene sentido cuando el fitness es I/O-bound con latencias heterogéneas, no para funciones puramente numéricas.
+
+### V4 — Vectorizada
+
+```python
+# V4_vectorized.py
+return self.vectorized_f(positions).astype(float)
+```
+
+Evaluación completamente vectorizada con NumPy: una sola llamada procesa toda la matriz `(n_particles, dim)` sin bucles Python. Requiere una versión vectorizada de cada función objetivo (definidas en `objectives/vectorized_functions.py`). Aprovecha el "paralelismo implícito" de las operaciones BLAS de NumPy. Para benchmarks como Sphere o Ackley es la opción claramente más rápida.
 
 ### Comparativa de estrategias
 
@@ -456,18 +487,29 @@ Cada ejecución crea un directorio con timestamp dentro de `pso/results/`:
 
 ```
 pso/results/
-├── benchmarks_20260407_132716/
+├── benchmarks_20260528_120828/
 │   ├── benchmark_results.csv      # Resultados completos (una fila por ejecución)
 │   ├── benchmark_summary.csv      # Agregados por (objetivo, dim, modo)
 │   ├── config.json                # Parámetros + info de hardware
 │   └── run_benchmarks.log         # Log de ejecución
-├── grid_search_20260407_144218/
+├── grid_search_20260524_103412/
 │   ├── grid_search_full.csv
 │   ├── grid_search_summary.csv
 │   ├── grid_search_best.csv
 │   ├── config.json
 │   └── run_grid_search.log
-└── viz_20260407_183126/
+├── datacenter_20260528_162901/
+│   ├── summary.csv                # Métricas baseline vs PSO
+│   ├── convergence.csv            # Curva de fitness por iteración
+│   ├── config.json                # Escenario + configuración PSO + resultados
+│   ├── heatmap_baseline.png
+│   ├── heatmap_pso.png
+│   ├── energy_comparison.png
+│   ├── energy_breakdown.png
+│   ├── convergence.png
+│   ├── variable_choice.png
+│   └── run.log
+└── viz_20260524_110205/
     ├── sphere_2d.gif
     ├── sphere_3d.gif
     └── ...
@@ -486,7 +528,7 @@ pso/results/
   "objectives": ["sphere", "rosenbrock", "rastrigin", "ackley"],
   "dims": [2, 10, 30],
   "seeds": [1, 2, 3, 4, 5],
-  "modes": ["sequential", "threading", "pyswarm"],
+  "modes": ["sequential", "threading", "multiprocessing", "async", "vectorized", "pyswarm"],
   "max_iter": 2000,
   "n_particles": 50,
   "strategy": "clamp",
@@ -598,7 +640,7 @@ Esto garantiza que con la misma seed y los mismos parámetros se obtiene exactam
 
 En los benchmarks y grid search se utilizan siempre múltiples seeds (por defecto 5) para promediar resultados y evaluar la variabilidad. Las seeds usadas quedan registradas en el `config.json` de cada ejecución.
 
-**Nota sobre multiprocessing:** la reproducibilidad está garantizada para V0 y V1. En V2, el orden de finalización de los procesos puede variar, pero como cada proceso evalúa una partícula de forma independiente y el resultado se recoge en orden (la API de `executor.map` preserva el orden), los resultados finales son deterministas para la misma seed.
+**Nota sobre los distintos modos:** la reproducibilidad está garantizada para V0 (sequential) y V4 (vectorized), que ejecutan en el mismo proceso e hilo. En V1 (threading) y V2 (multiprocessing), aunque el orden de finalización pueda variar, los resultados se recogen en el orden de las posiciones de entrada porque `executor.map` preserva el orden, así que el resultado final es determinista para la misma seed. V3 (async) usa `asyncio.gather`, que también preserva el orden de los resultados respecto a las corrutinas lanzadas. En todos los casos, una misma seed produce el mismo `best_value` y `best_position`.
 
 ---
 
@@ -616,21 +658,39 @@ python -m pso.run_scripts.run_datacenter_case
 
 Genera en `pso/results/datacenter_{timestamp}/` un resumen CSV, la curva de convergencia, un `config.json` reproducible, dos heatmaps de temperaturas (baseline y PSO), barras de energía y un plot de las variables óptimas.
 
-**Análisis interactivo:** el cuaderno `pso/analysis/datacenter_analysis.ipynb` reconstruye el escenario a partir de la seed guardada y reevalúa baseline y solución del PSO usando los módulos del paquete `use_case/`. Produce tablas comparativas, curva de convergencia, desglose de energía, mapas térmicos y comparativa de variables, con discusión inline de cada resultado.
+### Cuaderno de análisis
+
+El cuaderno `pso/analysis/datacenter_analysis.ipynb` reconstruye el escenario a partir de la seed guardada y reevalúa baseline y solución del PSO usando los módulos del paquete `use_case/`. Produce tablas comparativas, curva de convergencia, desglose de energía, mapas térmicos y comparativa de variables, con discusión inline de cada resultado.
 
 ```bash
 jupyter notebook pso/analysis/datacenter_analysis.ipynb
 ```
 
-**Dashboard ejecutivo (`app.py`):** vista web pensada para enseñar los resultados al cliente. Lee `pso/results/datacenter_*` y muestra KPIs en cards, comparativa energética, mapas térmicos interactivos, curva de convergencia y las variables optimizadas, todo con plots de Plotly y un estilo limpio orientado a presentación. Permite cambiar entre distintas ejecuciones desde la barra lateral.
+### Dashboard interactivo (`app.py`)
+
+Para enseñar los resultados al cliente final hay un dashboard hecho con Streamlit en la raíz del proyecto. Lee la carpeta `pso/results/` y presenta una vista web orientada a presentación, con plots interactivos de Plotly y estilo corporativo.
+
+Incluye:
+
+- **KPIs** arriba: ahorro energético, energía total, temperatura máxima, número de hotspots, mejora de fitness.
+- **Comparativa energética**: energía total + desglose por componente (chiller, ventiladores, caudal).
+- **Mapas térmicos** lado a lado (baseline y PSO) con escala de color común.
+- **Curva de convergencia** del PSO con la línea del baseline como referencia.
+- **Variables de control optimizadas**: setpoint, velocidades de ventiladores y caudales por zona.
+- **Resumen ejecutivo** en tabla con todas las métricas y la diferencia.
+- **Sidebar** con la configuración del escenario y del PSO, más un selector que permite cambiar entre las distintas ejecuciones guardadas en `pso/results/datacenter_*`.
+
+Para arrancarlo:
 
 ```bash
 streamlit run app.py
 ```
 
-El dashboard se abre automáticamente en el navegador en `http://localhost:8501`.
+Se abre automáticamente en `http://localhost:8501`. No genera ficheros nuevos: solo lee los resultados ya producidos por `run_datacenter_case`.
 
-**Importante:** este caso de uso **no es una simulación física realista**. El modelo térmico es estático, no hay CFD, ni dinámica temporal, ni efectos de pasillo caliente/frío. Es una aproximación defendible como ejercicio académico, suficiente para mostrar el trade-off central entre energía y seguridad térmica, pero no para dimensionar una instalación real.
+### Limitaciones del modelo
+
+Este caso de uso **no es una simulación física realista**. El modelo térmico es estático, no hay CFD, ni dinámica temporal, ni efectos de pasillo caliente/frío. Es una aproximación defendible como ejercicio académico, suficiente para mostrar el trade-off central entre energía y seguridad térmica, pero no para dimensionar una instalación real.
 
 La explicación detallada (variables, modelo térmico, consumo, penalizaciones, baseline, interpretación de resultados y lista completa de limitaciones) está en [`docs/datacenter_case_study.md`](docs/datacenter_case_study.md).
 
@@ -638,16 +698,25 @@ La explicación detallada (variables, modelo térmico, consumo, penalizaciones, 
 
 ## Dependencias
 
-El proyecto usa exclusivamente la librería estándar de Python y las siguientes dependencias externas:
+El proyecto usa la librería estándar de Python más las siguientes dependencias externas. Las versiones exactas están fijadas en `requirements.txt`:
 
-| Paquete | Versión mínima | Propósito |
-| ------- | -------------- | --------- |
-| `numpy` | >= 1.24 | Operaciones matriciales, generación aleatoria |
-| `pandas` | >= 2.0 | DataFrames para resultados y exportación CSV |
-| `matplotlib` | >= 3.7 | Visualización, animaciones FuncAnimation |
-| `pyswarm` | >= 0.6 | Implementación PSO externa de referencia |
-| `streamlit` | >= 1.30 | Dashboard interactivo del caso de uso (`app.py`) |
-| `plotly` | >= 5.18 | Gráficos interactivos del dashboard |
-| `jupyter`, `nbconvert` | recientes | Ejecución de los cuadernos de análisis |
+| Paquete | Versión usada | Propósito |
+| ------- | ------------- | --------- |
+| `numpy` | 2.4.6 | Operaciones matriciales, generación aleatoria |
+| `pandas` | 3.0.3 | DataFrames para resultados y exportación CSV |
+| `matplotlib` | 3.10.9 | Visualización, animaciones FuncAnimation |
+| `plotly` | 6.7.0 | Gráficos interactivos del dashboard |
+| `pyswarm` | 0.9.0 | Implementación PSO externa de referencia |
+| `streamlit` | 1.57.0 | Dashboard interactivo del caso de uso (`app.py`) |
+| `jupyter` | 1.1.1 | Entorno de notebooks |
+| `ipykernel` | 7.2.0 | Kernel Python para los notebooks |
+| `nbconvert` | 7.17.1 | Ejecución programática de notebooks |
+| `pytest` | 9.0.3 | Tests unitarios |
 
 Python 3.10+ es necesario por el uso de `match/case` (PEP 634) y union types `X | Y` (PEP 604).
+
+Para instalar todo de golpe:
+
+```bash
+pip install -r requirements.txt
+```
