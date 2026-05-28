@@ -11,12 +11,9 @@ from pso.experiments.benchmarks import Instance
 from pso.io.paths import make_run_dir
 from pso.io.logging import setup_logging
 from pso.io.save_results import save_csv, save_json
-from pso.use_case.datacenter_cooling import (
-    create_default_datacenter_scenario,
-    evaluate_solution,
-    make_objective,
-    phys_to_norm,
-)
+from pso.use_case.scenario import create_default_datacenter_scenario
+from pso.use_case.encoding import phys_to_norm
+from pso.use_case.objective import evaluate_solution, make_objective
 from pso.use_case.datacenter_plots import (
     plot_temperature_heatmap,
     plot_energy_comparison,

@@ -93,4 +93,5 @@ class V3_async:
         return np.array(values, dtype=float)
 
     def shutdown(self) -> None:
-        pass
+        """Release evaluator resources. No-op for the async evaluator."""
+    pass

@@ -21,7 +21,8 @@ Implementación modular de Particle Swarm Optimization (PSO) en Python, diseñad
 11. [Visualización](#visualización)
 12. [Tests](#tests)
 13. [Reproducibilidad](#reproducibilidad)
-14. [Dependencias](#dependencias)
+14. [Caso de uso: refrigeración de un data center](#caso-de-uso-refrigeración-de-un-data-center)
+15. [Dependencias](#dependencias)
 
 ---
 
@@ -31,7 +32,7 @@ Implementación modular de Particle Swarm Optimization (PSO) en Python, diseñad
 PSO_Algorithm/
 ├── README.md
 ├── .gitignore
-├── app.py
+├── app.py                           # Dashboard Streamlit del caso de uso
 └── pso/
     ├── __init__.py
     ├── core/                        # Motor del PSO
@@ -63,12 +64,19 @@ PSO_Algorithm/
     │   ├── run_benchmarks.py        #   Suite completa de benchmarks
     │   ├── run_grid_search.py       #   Búsqueda de hiperparámetros
     │   └── run_datacenter_case.py   #   Caso de uso aplicado (data center)
-    ├── use_case/                    # Caso de uso aplicado
-    │   ├── datacenter_cooling.py    #   Modelo térmico/energético + objetivo
+    ├── use_case/                    # Caso de uso aplicado (data center)
+    │   ├── scenario.py              #   DataCenterScenario + builders + factory
+    │   ├── encoding.py              #   decode_particle, phys_to_norm
+    │   ├── thermal_model.py         #   Refrigeración efectiva y simulación térmica
+    │   ├── energy_model.py          #   Consumo del chiller, fans y airflow
+    │   ├── penalties.py             #   Penalizaciones safe/hot/over/balance/change
+    │   ├── objective.py             #   Fitness, closure para el PSO, evaluate_solution
     │   └── datacenter_plots.py      #   Plots específicos del caso
+    ├── analysis/                    # Cuadernos de análisis (Jupyter)
+    │   ├── benchmark_analysis.ipynb #   Análisis de la suite de benchmarks
+    │   └── datacenter_analysis.ipynb#   Análisis del caso de uso aplicado
     ├── tests/                       # Tests unitarios
-    │   ├── tests_pso.py             #   (reproducibilidad, bounds, monotonía, etc.)
-    │   └── tests_datacenter_case.py #   Tests del caso de uso
+    │   └── tests_pso.py             #   (reproducibilidad, bounds, monotonía, etc.)
     └── results/                     # Resultados generados (no se sube a Git)
 
 docs/
@@ -168,7 +176,7 @@ python -m venv .venv
 source .venv/bin/activate
 
 # 3. Instalar dependencias
-pip install numpy pandas matplotlib pyswarm
+pip install numpy pandas matplotlib pyswarm streamlit plotly jupyter nbconvert
 ```
 
 ### Lista de dependencias
@@ -179,6 +187,9 @@ pip install numpy pandas matplotlib pyswarm
 | `pandas`     | Gestión de resultados tabulares, exportación CSV   |
 | `matplotlib` | Visualización, animaciones 2D/3D                   |
 | `pyswarm`    | Implementación PSO externa usada como referencia   |
+| `streamlit`  | Dashboard interactivo del caso de uso (`app.py`)   |
+| `plotly`     | Gráficos interactivos del dashboard                |
+| `jupyter`    | Ejecución de los cuadernos de análisis             |
 
 ---
 
@@ -262,7 +273,10 @@ python -m pytest pso/tests/tests_pso.py -v
 | `python -m pso.run_scripts.run_grid_search` | Grid search de hiperparámetros | CSV + JSON + log |
 | `python -m pso.viz.make_viz` | Generación de animaciones 2D/3D | GIF |
 | `python -m pso.run_scripts.run_datacenter_case` | Caso de uso: refrigeración de un data center | CSV + JSON + PNG + log |
-| `python -m pytest pso/tests/ -v` | Tests unitarios | Consola |
+| `jupyter notebook pso/analysis/benchmark_analysis.ipynb` | Cuaderno de análisis de los benchmarks | Figuras y tablas inline |
+| `jupyter notebook pso/analysis/datacenter_analysis.ipynb` | Cuaderno de análisis del caso de uso | Figuras y tablas inline |
+| `streamlit run app.py` | Dashboard interactivo del caso de uso | Vista web en navegador |
+| `python -m pytest pso/tests/tests_pso.py -v` | Tests unitarios del motor PSO | Consola |
 
 ---
 
@@ -602,6 +616,20 @@ python -m pso.run_scripts.run_datacenter_case
 
 Genera en `pso/results/datacenter_{timestamp}/` un resumen CSV, la curva de convergencia, un `config.json` reproducible, dos heatmaps de temperaturas (baseline y PSO), barras de energía y un plot de las variables óptimas.
 
+**Análisis interactivo:** el cuaderno `pso/analysis/datacenter_analysis.ipynb` reconstruye el escenario a partir de la seed guardada y reevalúa baseline y solución del PSO usando los módulos del paquete `use_case/`. Produce tablas comparativas, curva de convergencia, desglose de energía, mapas térmicos y comparativa de variables, con discusión inline de cada resultado.
+
+```bash
+jupyter notebook pso/analysis/datacenter_analysis.ipynb
+```
+
+**Dashboard ejecutivo (`app.py`):** vista web pensada para enseñar los resultados al cliente. Lee `pso/results/datacenter_*` y muestra KPIs en cards, comparativa energética, mapas térmicos interactivos, curva de convergencia y las variables optimizadas, todo con plots de Plotly y un estilo limpio orientado a presentación. Permite cambiar entre distintas ejecuciones desde la barra lateral.
+
+```bash
+streamlit run app.py
+```
+
+El dashboard se abre automáticamente en el navegador en `http://localhost:8501`.
+
 **Importante:** este caso de uso **no es una simulación física realista**. El modelo térmico es estático, no hay CFD, ni dinámica temporal, ni efectos de pasillo caliente/frío. Es una aproximación defendible como ejercicio académico, suficiente para mostrar el trade-off central entre energía y seguridad térmica, pero no para dimensionar una instalación real.
 
 La explicación detallada (variables, modelo térmico, consumo, penalizaciones, baseline, interpretación de resultados y lista completa de limitaciones) está en [`docs/datacenter_case_study.md`](docs/datacenter_case_study.md).
@@ -618,5 +646,8 @@ El proyecto usa exclusivamente la librería estándar de Python y las siguientes
 | `pandas` | >= 2.0 | DataFrames para resultados y exportación CSV |
 | `matplotlib` | >= 3.7 | Visualización, animaciones FuncAnimation |
 | `pyswarm` | >= 0.6 | Implementación PSO externa de referencia |
+| `streamlit` | >= 1.30 | Dashboard interactivo del caso de uso (`app.py`) |
+| `plotly` | >= 5.18 | Gráficos interactivos del dashboard |
+| `jupyter`, `nbconvert` | recientes | Ejecución de los cuadernos de análisis |
 
 Python 3.10+ es necesario por el uso de `match/case` (PEP 634) y union types `X | Y` (PEP 604).

@@ -44,3 +44,7 @@ class V4_vectorized:
         """
         # Single call: no Python loop, all computation happens inside NumPy/C
         return self.vectorized_f(positions).astype(float)
+    
+    def shutdown(self) -> None:
+        """Release evaluator resources. No-op for the vectorized evaluator."""
+    pass

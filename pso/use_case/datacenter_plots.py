@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 
-from pso.use_case.datacenter_cooling import DataCenterScenario
+from pso.use_case.scenario import DataCenterScenario
 
 
 def plot_temperature_heatmap(temperatures: np.ndarray, scenario: DataCenterScenario,
